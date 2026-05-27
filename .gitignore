@@ -1,0 +1,50 @@
+*.log
+.DS_Store
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+/.codex
+/.cursor/
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/build
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/storage/app/invoices/
+/vendor
+
+# Local SQLite — each dev runs `php artisan migrate` fresh
+/database/*.sqlite
+/database/*.sqlite-journal
+/database/*.sqlite-wal
+/database/*.sqlite-shm
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+Thumbs.db
+
+# Project-specific: legacy reference material — never push
+/_legacy/
+
+# Plan + task docs from Claude planning sessions (kept locally for context)
+/план_работ_*
+
+# OS / editors
+*.swp
+*.swo
+*~
+.directory
+
+# Local-only test artifacts
+/coverage/
+.phpunit.cache/

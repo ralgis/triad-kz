@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    name: Lint, static analysis, tests
+
+    services:
+      mysql:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: triad_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: bcmath, ctype, curl, dom, fileinfo, gd, intl, json, mbstring, mysql, openssl, pcre, pdo, tokenizer, xml, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Copy env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Format check (Pint)
+        run: vendor/bin/pint --test
+
+      - name: Static analysis (PHPStan / Larastan)
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=2G
+
+      - name: Run migrations
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: triad_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: php artisan migrate --force
+
+      - name: Run tests (Pest)
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: triad_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: vendor/bin/pest --no-coverage
+
+      - name: Composer audit (advisory only)
+        run: composer audit --no-dev --abandoned=report
+        continue-on-error: true
