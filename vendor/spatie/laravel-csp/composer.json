@@ -1,0 +1,78 @@
+{
+    "name": "spatie/laravel-csp",
+    "description": "Add CSP headers to the responses of a Laravel app",
+    "keywords": [
+        "spatie",
+        "laravel-csp",
+        "content-security-policy",
+        "security",
+        "headers",
+        "csp",
+        "laravel"
+    ],
+    "homepage": "https://github.com/spatie/laravel-csp",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Thomas Verhelst",
+            "email": "tvke91@gmail.com",
+            "homepage": "https://spatie.be",
+            "role": "Developer"
+        },
+        {
+            "name": "Freek Van der Herten",
+            "email": "freek@spatie.be",
+            "homepage": "https://spatie.be",
+            "role": "Developer"
+        },
+        {
+            "name": "Sebastian De Deyne",
+            "email": "sebastian@spatie.be",
+            "homepage": "https://spatie.be",
+            "role": "Developer"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": "^8.3",
+        "illuminate/http": "^11.36.1|^12.0|^13.0",
+        "illuminate/support": "^11.36.1|^12.0|^13.0",
+        "spatie/laravel-package-tools": "^1.17"
+    },
+    "require-dev": {
+        "mockery/mockery": "^1.6",
+        "orchestra/testbench": "^9.9|^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0",
+        "roave/security-advisories": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Spatie\\Csp\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Spatie\\Csp\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "lint": "php-cs-fixer fix",
+        "test": "vendor/bin/pest",
+        "test-coverage": "pest --coverage-html coverage"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "phpstan/extension-installer": true,
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Spatie\\Csp\\CspServiceProvider"
+            ]
+        }
+    }
+}

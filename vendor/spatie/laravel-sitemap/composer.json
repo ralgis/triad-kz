@@ -1,0 +1,67 @@
+{
+    "name": "spatie/laravel-sitemap",
+    "description": "Create and generate sitemaps with ease",
+    "keywords": [
+        "spatie",
+        "laravel-sitemap"
+    ],
+    "homepage": "https://github.com/spatie/laravel-sitemap",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Freek Van der Herten",
+            "email": "freek@spatie.be",
+            "homepage": "https://spatie.be",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "illuminate/support": "^12.0|^13.0",
+        "nesbot/carbon": "^2.71|^3.0",
+        "spatie/crawler": "^9.0",
+        "spatie/laravel-package-tools": "^1.16.1"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.13",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^4.0",
+        "phpstan/extension-installer": "^1.3",
+        "phpstan/phpstan-deprecation-rules": "^2.0",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "spatie/pest-plugin-snapshots": "^2.1",
+        "spatie/temporary-directory": "^2.2"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Spatie\\Sitemap\\SitemapServiceProvider"
+            ]
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Spatie\\Sitemap\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Spatie\\Sitemap\\Test\\": "tests"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "format": "vendor/bin/pint",
+        "test": "vendor/bin/pest"
+    }
+}

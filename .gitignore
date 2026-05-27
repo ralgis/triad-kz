@@ -23,7 +23,11 @@
 /storage/*.key
 /storage/pail
 /storage/app/invoices/
-/vendor
+# /vendor  ← KEPT IN GIT: Plesk shared hosting disables `proc_open`, so
+#             `composer install` cannot run on the server. We pre-build
+#             vendor/ locally and ship it with the repo. Rebuild locally
+#             via `composer install --no-dev --optimize-autoloader`
+#             before each push that changes dependencies.
 
 # Local SQLite — each dev runs `php artisan migrate` fresh
 /database/*.sqlite

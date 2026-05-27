@@ -1,0 +1,590 @@
+<?php
+
+namespace Spatie\Crawler;
+
+use Exception;
+use Generator;
+use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\TransferStats;
+use Spatie\Browsershot\Browsershot;
+use Spatie\Crawler\Concerns\ConfiguresRequests;
+use Spatie\Crawler\Concerns\HasCrawlLimits;
+use Spatie\Crawler\Concerns\HasCrawlObservers;
+use Spatie\Crawler\Concerns\HasCrawlQueue;
+use Spatie\Crawler\Concerns\HasCrawlScope;
+use Spatie\Crawler\CrawlObservers\CollectUrlsObserver;
+use Spatie\Crawler\CrawlObservers\CrawlObserverCollection;
+use Spatie\Crawler\CrawlQueues\ArrayCrawlQueue;
+use Spatie\Crawler\Enums\FinishReason;
+use Spatie\Crawler\Enums\ResourceType;
+use Spatie\Crawler\Exceptions\InvalidCrawlRequestHandler;
+use Spatie\Crawler\Exceptions\MissingJavaScriptRenderer;
+use Spatie\Crawler\Handlers\CrawlRequestFailed;
+use Spatie\Crawler\Handlers\CrawlRequestFulfilled;
+use Spatie\Crawler\JavaScriptRenderers\BrowsershotRenderer;
+use Spatie\Crawler\JavaScriptRenderers\JavaScriptRenderer;
+use Spatie\Crawler\Throttlers\Throttle;
+use Spatie\Crawler\UrlParsers\LinkUrlParser;
+use Spatie\Crawler\UrlParsers\SitemapUrlParser;
+use Spatie\Crawler\UrlParsers\UrlParser;
+use Spatie\Robots\RobotsTxt;
+
+class Crawler
+{
+    use ConfiguresRequests;
+    use HasCrawlLimits;
+    use HasCrawlObservers;
+    use HasCrawlQueue;
+    use HasCrawlScope;
+
+    public const DEFAULT_USER_AGENT = '*';
+
+    protected string $baseUrl;
+
+    protected int $maximumResponseSize = 1024 * 1024 * 2;
+
+    protected ?int $maximumDepth = null;
+
+    protected bool $respectRobots = true;
+
+    protected bool $rejectNofollowLinks = true;
+
+    protected ?JavaScriptRenderer $javaScriptRenderer = null;
+
+    protected ?RobotsTxt $robotsTxt = null;
+
+    protected string $crawlRequestFulfilledClass;
+
+    protected string $crawlRequestFailedClass;
+
+    protected ?UrlParser $urlParser = null;
+
+    protected int $delayBetweenRequests = 0;
+
+    protected ?Throttle $throttle = null;
+
+    protected array $allowedMimeTypes = [];
+
+    protected string $defaultScheme = 'https';
+
+    protected int $concurrency = 10;
+
+    protected ?array $fakes = null;
+
+    protected bool $shouldStop = false;
+
+    protected ?\Closure $shouldStopCallback = null;
+
+    protected int $crawledUrlCount = 0;
+
+    protected int $failedUrlCount = 0;
+
+    /** @var array<string, TransferStats> */
+    protected array $transferStats = [];
+
+    /** @var array<int, ResourceType> */
+    protected array $extractResourceTypes = [ResourceType::Link];
+
+    public static function create(string $url, array $clientOptions = []): self
+    {
+        $crawler = new self($clientOptions);
+
+        $crawler->baseUrl = $url;
+
+        return $crawler;
+    }
+
+    public function __construct(array $clientOptions = [])
+    {
+        $merged = array_merge(static::$defaultClientOptions, $clientOptions);
+
+        // A null value explicitly removes a default option
+        $this->clientOptions = array_filter($merged, fn ($value) => $value !== null);
+
+        $this->crawlQueue = new ArrayCrawlQueue;
+        $this->crawlObservers = new CrawlObserverCollection;
+        $this->crawlRequestFulfilledClass = CrawlRequestFulfilled::class;
+        $this->crawlRequestFailedClass = CrawlRequestFailed::class;
+    }
+
+    // Fluent configuration methods
+
+    public function depth(int $maximumDepth): self
+    {
+        $this->maximumDepth = $maximumDepth;
+
+        return $this;
+    }
+
+    public function concurrency(int $concurrency): self
+    {
+        $this->concurrency = $concurrency;
+
+        return $this;
+    }
+
+    public function delay(int $delayInMilliseconds): self
+    {
+        $this->delayBetweenRequests = ($delayInMilliseconds * 1000);
+
+        return $this;
+    }
+
+    public function throttle(Throttle $throttle): self
+    {
+        $this->throttle = $throttle;
+
+        return $this;
+    }
+
+    public function maxResponseSizeInBytes(int $maximumResponseSizeInBytes): self
+    {
+        $this->maximumResponseSize = $maximumResponseSizeInBytes;
+
+        return $this;
+    }
+
+    public function allowedMimeTypes(array $types): self
+    {
+        $this->allowedMimeTypes = $types;
+
+        return $this;
+    }
+
+    public function defaultScheme(string $defaultScheme): self
+    {
+        $this->defaultScheme = $defaultScheme;
+
+        return $this;
+    }
+
+    public function ignoreRobots(): self
+    {
+        $this->respectRobots = false;
+
+        return $this;
+    }
+
+    public function respectRobots(): self
+    {
+        $this->respectRobots = true;
+
+        return $this;
+    }
+
+    public function followNofollow(): self
+    {
+        $this->rejectNofollowLinks = false;
+
+        return $this;
+    }
+
+    public function rejectNofollowLinks(): self
+    {
+        $this->rejectNofollowLinks = true;
+
+        return $this;
+    }
+
+    // Resource type extraction
+
+    public function alsoExtract(ResourceType ...$types): self
+    {
+        foreach ($types as $type) {
+            if (! in_array($type, $this->extractResourceTypes, true)) {
+                $this->extractResourceTypes[] = $type;
+            }
+        }
+
+        return $this;
+    }
+
+    public function extractAll(): self
+    {
+        $this->extractResourceTypes = ResourceType::cases();
+
+        return $this;
+    }
+
+    public function executeJavaScript(?JavaScriptRenderer $renderer = null): self
+    {
+        if ($renderer === null) {
+            if (! class_exists(Browsershot::class)) {
+                throw MissingJavaScriptRenderer::browsershotNotInstalled();
+            }
+
+            $renderer = new BrowsershotRenderer;
+        }
+
+        $this->javaScriptRenderer = $renderer;
+
+        return $this;
+    }
+
+    public function doNotExecuteJavaScript(): self
+    {
+        $this->javaScriptRenderer = null;
+
+        return $this;
+    }
+
+    public function urlParser(UrlParser $urlParser): self
+    {
+        $this->urlParser = $urlParser;
+
+        return $this;
+    }
+
+    public function parseSitemaps(): self
+    {
+        $this->urlParser = new SitemapUrlParser;
+
+        return $this;
+    }
+
+    public function fake(array $fakes): self
+    {
+        $this->fakes = $fakes;
+
+        return $this;
+    }
+
+    /**
+     * Register a callback that is evaluated before scheduling each next request.
+     * Returning true interrupts the crawl and makes start() return FinishReason::Interrupted.
+     *
+     * @param  callable(self):bool  $shouldStopCallback
+     */
+    public function shouldStopCallback(callable $shouldStopCallback): self
+    {
+        $this->shouldStopCallback = $shouldStopCallback instanceof \Closure
+            ? $shouldStopCallback
+            : \Closure::fromCallable($shouldStopCallback);
+
+        return $this;
+    }
+
+    public function start(): FinishReason
+    {
+        $this->shouldStop = false;
+        $this->crawledUrlCount = 0;
+        $this->failedUrlCount = 0;
+        $this->currentUrlCount = 0;
+        $this->startedAt = time();
+
+        $baseUrl = $this->normalizeBaseUrl($this->baseUrl);
+        $this->baseUrl = $baseUrl;
+
+        $this->totalUrlCount = $this->crawlQueue->getProcessedUrlCount();
+
+        $client = $this->buildClient();
+
+        $this->resolveScope();
+
+        if ($this->respectRobots) {
+            $this->robotsTxt = $this->createRobotsTxt($client);
+        }
+
+        $this->addToCrawlQueue(new CrawlUrl($this->baseUrl));
+
+        $this->registerSignalHandlers();
+
+        try {
+            $this->startCrawlingQueue($client);
+        } finally {
+            $this->unregisterSignalHandlers();
+        }
+
+        $finishReason = match (true) {
+            $this->shouldStop => FinishReason::Interrupted,
+            $this->reachedCrawlLimits() => FinishReason::CrawlLimitReached,
+            $this->reachedTimeLimits() => FinishReason::TimeLimitReached,
+            default => FinishReason::Completed,
+        };
+
+        $this->crawlObservers->finishedCrawling($finishReason, $this->getCrawlProgress());
+
+        $this->executionTime += time() - $this->startedAt;
+        $this->startedAt = null;
+
+        return $finishReason;
+    }
+
+    /** @return array<CrawledUrl> */
+    public function foundUrls(): array
+    {
+        $collector = new CollectUrlsObserver;
+
+        $this->crawlObservers->addObserver($collector);
+
+        $this->start();
+
+        return $collector->getUrls();
+    }
+
+    public function fulfilledHandler(string $crawlRequestFulfilledClass): self
+    {
+        $baseClass = CrawlRequestFulfilled::class;
+
+        if (! is_subclass_of($crawlRequestFulfilledClass, $baseClass)) {
+            throw InvalidCrawlRequestHandler::doesNotExtendBaseClass($crawlRequestFulfilledClass, $baseClass);
+        }
+
+        $this->crawlRequestFulfilledClass = $crawlRequestFulfilledClass;
+
+        return $this;
+    }
+
+    public function failedHandler(string $crawlRequestFailedClass): self
+    {
+        $baseClass = CrawlRequestFailed::class;
+
+        if (! is_subclass_of($crawlRequestFailedClass, $baseClass)) {
+            throw InvalidCrawlRequestHandler::doesNotExtendBaseClass($crawlRequestFailedClass, $baseClass);
+        }
+
+        $this->crawlRequestFailedClass = $crawlRequestFailedClass;
+
+        return $this;
+    }
+
+    // Getters
+
+    public function getBaseUrl(): string
+    {
+        return $this->baseUrl;
+    }
+
+    public function getMaximumDepth(): ?int
+    {
+        return $this->maximumDepth;
+    }
+
+    public function getMaximumResponseSize(): int
+    {
+        return $this->maximumResponseSize;
+    }
+
+    public function getDelayBetweenRequests(): int
+    {
+        return $this->delayBetweenRequests;
+    }
+
+    public function getThrottle(): ?Throttle
+    {
+        return $this->throttle;
+    }
+
+    public function getAllowedMimeTypes(): array
+    {
+        return $this->allowedMimeTypes;
+    }
+
+    public function getDefaultScheme(): string
+    {
+        return $this->defaultScheme;
+    }
+
+    public function mustRespectRobots(): bool
+    {
+        return $this->respectRobots;
+    }
+
+    public function mustRejectNofollowLinks(): bool
+    {
+        return $this->rejectNofollowLinks;
+    }
+
+    public function getRobotsTxt(): ?RobotsTxt
+    {
+        return $this->robotsTxt;
+    }
+
+    public function getUrlParser(): UrlParser
+    {
+        if ($this->urlParser !== null) {
+            return $this->urlParser;
+        }
+
+        return new LinkUrlParser($this->rejectNofollowLinks, $this->extractResourceTypes);
+    }
+
+    public function getJavaScriptRenderer(): ?JavaScriptRenderer
+    {
+        return $this->javaScriptRenderer;
+    }
+
+    public function mayExecuteJavascript(): bool
+    {
+        return $this->javaScriptRenderer !== null;
+    }
+
+    public function setTransferStats(string $url, TransferStats $stats): void
+    {
+        $this->transferStats[$url] = $stats;
+    }
+
+    public function getTransferStats(string $url): ?TransferStats
+    {
+        return $this->transferStats[$url] ?? null;
+    }
+
+    public function recordCrawled(): void
+    {
+        $this->crawledUrlCount++;
+    }
+
+    public function recordFailed(): void
+    {
+        $this->failedUrlCount++;
+    }
+
+    public function getCrawlProgress(): CrawlProgress
+    {
+        return new CrawlProgress(
+            urlsCrawled: $this->crawledUrlCount,
+            urlsFailed: $this->failedUrlCount,
+            urlsFound: $this->crawlQueue->getUrlCount(),
+            urlsPending: $this->crawlQueue->getPendingUrlCount(),
+        );
+    }
+
+    public function hasReachedLimits(): bool
+    {
+        return $this->shouldStop
+            || $this->reachedCrawlLimits()
+            || $this->reachedTimeLimits();
+    }
+
+    public function applyDelay(): void
+    {
+        if ($this->throttle !== null) {
+            $this->throttle->sleep();
+
+            return;
+        }
+
+        usleep($this->delayBetweenRequests);
+    }
+
+    // Internal methods
+
+    protected function normalizeBaseUrl(string $baseUrl): string
+    {
+        $parsed = parse_url($baseUrl);
+
+        if (! isset($parsed['scheme'])) {
+            $baseUrl = $this->defaultScheme.'://'.$baseUrl;
+        }
+
+        $parsed = parse_url($baseUrl);
+
+        if (! isset($parsed['path']) || $parsed['path'] === '') {
+            $baseUrl .= '/';
+        }
+
+        return $baseUrl;
+    }
+
+    protected function startCrawlingQueue(Client $client): void
+    {
+        while (
+            $this->shouldStop === false &&
+            $this->reachedCrawlLimits() === false &&
+            $this->reachedTimeLimits() === false &&
+            $this->crawlQueue->hasPendingUrls()
+        ) {
+            $pool = new Pool($client, $this->getCrawlRequests(), [
+                'concurrency' => $this->concurrency,
+                'fulfilled' => new $this->crawlRequestFulfilledClass($this),
+                'rejected' => new $this->crawlRequestFailedClass($this),
+            ]);
+
+            $promise = $pool->promise();
+
+            $promise->wait();
+        }
+    }
+
+    protected function createRobotsTxt(Client $client): RobotsTxt
+    {
+        try {
+            $parsed = parse_url($this->baseUrl);
+            $robotsUrl = ($parsed['scheme'] ?? 'https').'://'.($parsed['host'] ?? '').(isset($parsed['port']) ? ':'.$parsed['port'] : '').'/robots.txt';
+            $response = $client->get($robotsUrl);
+            $content = (string) $response->getBody();
+
+            return new RobotsTxt($content);
+        } catch (Exception $exception) {
+            return new RobotsTxt('');
+        }
+    }
+
+    protected function getCrawlRequests(): Generator
+    {
+        while (
+            $this->shouldStop === false &&
+            $this->reachedCrawlLimits() === false &&
+            $this->reachedTimeLimits() === false &&
+            $crawlUrl = $this->crawlQueue->getPendingUrl()
+        ) {
+            if ($this->shouldStopCallback !== null && ($this->shouldStopCallback)($this)) {
+                $this->shouldStop = true;
+
+                break;
+            }
+
+            if ($this->crawlQueue->hasAlreadyBeenProcessed($crawlUrl)) {
+                $this->crawlQueue->markAsProcessed($crawlUrl);
+
+                continue;
+            }
+
+            $shouldCrawl = $this->matchesAlwaysCrawl($crawlUrl->url)
+                || $this->getCrawlProfile()->shouldCrawl($crawlUrl->url);
+
+            if (! $shouldCrawl) {
+                $this->crawlQueue->markAsProcessed($crawlUrl);
+
+                continue;
+            }
+
+            $this->crawlObservers->willCrawl($crawlUrl);
+
+            $this->totalUrlCount++;
+            $this->currentUrlCount++;
+            $this->crawlQueue->markAsProcessed($crawlUrl);
+
+            yield $crawlUrl->id => new Request('GET', $crawlUrl->url);
+        }
+    }
+
+    protected function registerSignalHandlers(): void
+    {
+        if (! extension_loaded('pcntl')) {
+            return;
+        }
+
+        pcntl_async_signals(true);
+
+        pcntl_signal(SIGINT, function () {
+            $this->shouldStop = true;
+        });
+
+        pcntl_signal(SIGTERM, function () {
+            $this->shouldStop = true;
+        });
+    }
+
+    protected function unregisterSignalHandlers(): void
+    {
+        if (! extension_loaded('pcntl')) {
+            return;
+        }
+
+        pcntl_signal(SIGINT, SIG_DFL);
+        pcntl_signal(SIGTERM, SIG_DFL);
+    }
+}

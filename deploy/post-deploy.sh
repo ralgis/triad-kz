@@ -2,16 +2,14 @@
 # Plesk Git post-deploy hook for triad-kz.
 #
 # Set this script as "Additional deployment actions" in Plesk → Domains →
-# dev.triad.kz → Git → (your repo) → Settings → Additional deployment actions.
+# dev.triad.kz → Git → (your repo) → Settings → Additional deployment actions:
 #
-# Plesk runs commands inside the repository checkout directory (which IS
-# the document parent — dev.triad.kz/), as the system user (triadkz).
+#     bash deploy/post-deploy.sh
 #
-# Composer must be available on PATH. Plesk ships Composer at:
-#   /opt/plesk/php/8.4/bin/php /usr/lib64/plesk-9.0/composer.phar
-# But typically Plesk's "Composer" panel installs it as `composer` in PATH.
-#
-# This script is idempotent — safe to run on every deploy.
+# Plesk runs commands inside the repository checkout directory as the system
+# user (triadkz). On Plesk shared hosting `proc_open` is disabled, so
+# Composer can NOT run here — we ship a pre-built vendor/ in the repo
+# instead. This script only does runtime tasks that pure PHP can perform.
 
 set -e
 
@@ -24,37 +22,26 @@ echo "  Using: $PHP_BIN"
 $PHP_BIN -v | head -1
 
 echo ""
-echo "→ composer install (production)"
-# --no-dev: don't install pest/larastan/pint on the server
-# --optimize-autoloader: classmap auth for max speed
-# --no-progress: shorter logs in Plesk deployment-action output
-# --classmap-authoritative: no further classmap rebuilds at runtime
-composer install \
-    --no-dev \
-    --no-interaction \
-    --no-progress \
-    --optimize-autoloader \
-    --classmap-authoritative
-
-echo ""
 echo "→ artisan migrate --force"
-# --force: required in non-interactive/production environments
+# --force: required in non-interactive/production environments.
+# Pure PHP + PDO, no proc_open needed.
 $PHP_BIN artisan migrate --force
 
 echo ""
 echo "→ artisan storage:link"
-# Creates public/storage → storage/app/public symlink. Idempotent.
+# symlink public/storage → storage/app/public. Idempotent.
 $PHP_BIN artisan storage:link --force || true
 
 echo ""
-echo "→ Cache rebuild"
+echo "→ Cache rebuild (config + route + view)"
+# All pure PHP — no subprocesses.
 $PHP_BIN artisan config:cache
 $PHP_BIN artisan route:cache
 $PHP_BIN artisan view:cache
 
-# Filament has its own caches (icons, components, blade-components).
+# Filament's own caches.
 $PHP_BIN artisan filament:cache-components || true
 $PHP_BIN artisan icons:cache || true
 
 echo ""
-echo "✓ post-deploy completed"
+echo "✓ post-deploy completed (composer skipped — vendor/ ships with repo)"
