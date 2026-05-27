@@ -75,9 +75,9 @@ class Order extends Model
      * Append a status-change entry to status_history JSON.
      * Caller is responsible for actually setting $this->status afterwards.
      *
-     * @param  int|null  $byUserId  null when status changes from a public-side
-     *                              action (e.g. cancellation by customer);
-     *                              admin user id when from Filament.
+     * @param int|null $byUserId null when status changes from a public-side
+     *                           action (e.g. cancellation by customer);
+     *                           admin user id when from Filament.
      */
     public function appendStatusHistory(OrderStatus $from, OrderStatus $to, ?int $byUserId = null, ?string $note = null): void
     {
