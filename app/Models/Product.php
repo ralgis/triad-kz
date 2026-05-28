@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Contracts\HasPublicUrl;
 use App\Traits\HasSeo;
+use App\Traits\HasSlugRedirect;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,11 +19,12 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class Product extends Model implements HasMedia
+class Product extends Model implements HasMedia, HasPublicUrl
 {
     use HasFactory;
     use HasSeo;
     use HasSlug;
+    use HasSlugRedirect;
     use InteractsWithMedia;
     use SoftDeletes;
 
@@ -114,17 +117,19 @@ class Product extends Model implements HasMedia
 
     /**
      * Detail URL — needs a primary category for nesting.
-     * If no category, fall back to /catalog/{slug}/ (no nest).
+     * If no category, fall back to /catalog/{slug} (no nest).
+     *
+     * Trailing slash deliberately omitted — see Category::url().
      */
     public function url(?Category $category = null): string
     {
         $category ??= $this->categories->first();
 
         if ($category) {
-            return url('/catalog/'.$category->slug.'/'.$this->slug.'/');
+            return url('/catalog/'.$category->slug.'/'.$this->slug);
         }
 
-        return url('/catalog/'.$this->slug.'/');
+        return url('/catalog/'.$this->slug);
     }
 
     // ---- Scopes ----

@@ -891,6 +891,7 @@ class ComposerStaticInit2db3f723434a12fb0127e1533df470df
 
     public static $classMap = array (
         'App\\Console\\Commands\\CreateAdminCommand' => __DIR__ . '/../..' . '/app/Console/Commands/CreateAdminCommand.php',
+        'App\\Contracts\\HasPublicUrl' => __DIR__ . '/../..' . '/app/Contracts/HasPublicUrl.php',
         'App\\Enums\\CustomerType' => __DIR__ . '/../..' . '/app/Enums/CustomerType.php',
         'App\\Enums\\DeliveryMethod' => __DIR__ . '/../..' . '/app/Enums/DeliveryMethod.php',
         'App\\Enums\\MenuPosition' => __DIR__ . '/../..' . '/app/Enums/MenuPosition.php',
@@ -961,8 +962,10 @@ class ComposerStaticInit2db3f723434a12fb0127e1533df470df
         'App\\Models\\Redirect' => __DIR__ . '/../..' . '/app/Models/Redirect.php',
         'App\\Models\\Setting' => __DIR__ . '/../..' . '/app/Models/Setting.php',
         'App\\Models\\User' => __DIR__ . '/../..' . '/app/Models/User.php',
+        'App\\Observers\\SlugRedirectObserver' => __DIR__ . '/../..' . '/app/Observers/SlugRedirectObserver.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
         'App\\Providers\\Filament\\AdminPanelProvider' => __DIR__ . '/../..' . '/app/Providers/Filament/AdminPanelProvider.php',
+        'App\\Redirects\\DatabaseRedirector' => __DIR__ . '/../..' . '/app/Redirects/DatabaseRedirector.php',
         'App\\Rules\\BinRule' => __DIR__ . '/../..' . '/app/Rules/BinRule.php',
         'App\\Rules\\PhoneRule' => __DIR__ . '/../..' . '/app/Rules/PhoneRule.php',
         'App\\Services\\Cart\\Cart' => __DIR__ . '/../..' . '/app/Services/Cart/Cart.php',
@@ -973,6 +976,7 @@ class ComposerStaticInit2db3f723434a12fb0127e1533df470df
         'App\\Services\\Orders\\OrderService' => __DIR__ . '/../..' . '/app/Services/Orders/OrderService.php',
         'App\\Support\\Migrations\\SeoFields' => __DIR__ . '/../..' . '/app/Support/Migrations/SeoFields.php',
         'App\\Traits\\HasSeo' => __DIR__ . '/../..' . '/app/Traits/HasSeo.php',
+        'App\\Traits\\HasSlugRedirect' => __DIR__ . '/../..' . '/app/Traits/HasSlugRedirect.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'Barryvdh\\DomPDF\\Facade\\Pdf' => __DIR__ . '/..' . '/barryvdh/laravel-dompdf/src/Facade/Pdf.php',
         'Barryvdh\\DomPDF\\PDF' => __DIR__ . '/..' . '/barryvdh/laravel-dompdf/src/PDF.php',

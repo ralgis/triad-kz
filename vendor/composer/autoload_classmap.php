@@ -7,6 +7,7 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'App\\Console\\Commands\\CreateAdminCommand' => $baseDir . '/app/Console/Commands/CreateAdminCommand.php',
+    'App\\Contracts\\HasPublicUrl' => $baseDir . '/app/Contracts/HasPublicUrl.php',
     'App\\Enums\\CustomerType' => $baseDir . '/app/Enums/CustomerType.php',
     'App\\Enums\\DeliveryMethod' => $baseDir . '/app/Enums/DeliveryMethod.php',
     'App\\Enums\\MenuPosition' => $baseDir . '/app/Enums/MenuPosition.php',
@@ -77,8 +78,10 @@ return array(
     'App\\Models\\Redirect' => $baseDir . '/app/Models/Redirect.php',
     'App\\Models\\Setting' => $baseDir . '/app/Models/Setting.php',
     'App\\Models\\User' => $baseDir . '/app/Models/User.php',
+    'App\\Observers\\SlugRedirectObserver' => $baseDir . '/app/Observers/SlugRedirectObserver.php',
     'App\\Providers\\AppServiceProvider' => $baseDir . '/app/Providers/AppServiceProvider.php',
     'App\\Providers\\Filament\\AdminPanelProvider' => $baseDir . '/app/Providers/Filament/AdminPanelProvider.php',
+    'App\\Redirects\\DatabaseRedirector' => $baseDir . '/app/Redirects/DatabaseRedirector.php',
     'App\\Rules\\BinRule' => $baseDir . '/app/Rules/BinRule.php',
     'App\\Rules\\PhoneRule' => $baseDir . '/app/Rules/PhoneRule.php',
     'App\\Services\\Cart\\Cart' => $baseDir . '/app/Services/Cart/Cart.php',
@@ -89,6 +92,7 @@ return array(
     'App\\Services\\Orders\\OrderService' => $baseDir . '/app/Services/Orders/OrderService.php',
     'App\\Support\\Migrations\\SeoFields' => $baseDir . '/app/Support/Migrations/SeoFields.php',
     'App\\Traits\\HasSeo' => $baseDir . '/app/Traits/HasSeo.php',
+    'App\\Traits\\HasSlugRedirect' => $baseDir . '/app/Traits/HasSlugRedirect.php',
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
     'Barryvdh\\DomPDF\\Facade\\Pdf' => $vendorDir . '/barryvdh/laravel-dompdf/src/Facade/Pdf.php',
     'Barryvdh\\DomPDF\\PDF' => $vendorDir . '/barryvdh/laravel-dompdf/src/PDF.php',

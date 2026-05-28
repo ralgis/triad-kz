@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Spatie\MissingPageRedirector\Redirector\ConfigurationRedirector;
+use App\Redirects\DatabaseRedirector;
 use Symfony\Component\HttpFoundation\Response;
 
 return [
@@ -10,8 +10,11 @@ return [
      * This is the class responsible for providing the URLs which must be redirected.
      * The only requirement for the redirector is that it needs to implement the
      * `Spatie\MissingPageRedirector\Redirector\Redirector`-interface
+     *
+     * We override the default ConfigurationRedirector with a DB-backed one
+     * so admins can edit the 301-map via Filament without a deploy.
      */
-    'redirector' => ConfigurationRedirector::class,
+    'redirector' => DatabaseRedirector::class,
 
     /*
      * By default the package will only redirect 404s. If you want to redirect on other

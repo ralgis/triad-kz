@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Contracts\HasPublicUrl;
 use App\Traits\HasSeo;
+use App\Traits\HasSlugRedirect;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class Page extends Model
+class Page extends Model implements HasPublicUrl
 {
     use HasFactory;
     use HasSeo;
     use HasSlug;
+    use HasSlugRedirect;
     use SoftDeletes;
 
     protected $fillable = [
@@ -47,6 +50,6 @@ class Page extends Model
 
     public function url(): string
     {
-        return url('/'.$this->slug.'/');
+        return url('/'.$this->slug);
     }
 }

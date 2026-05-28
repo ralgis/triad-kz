@@ -43,6 +43,11 @@ parameters:
           path: tests/*
         - identifier: missingType.iterableValue
           path: tests/*
+        # Pest 4's HTTP testing methods ($this->get/post/...) are dispatched
+        # via __call on TestCall, so PHPStan can't see them statically.
+        # Tests verify they work at runtime; suppress only inside /tests.
+        - identifier: method.notFound
+          path: tests/*
 
     # Don't fail when an ignore-pattern stops matching (e.g. we fixed an
     # error and the suppressor became unused). Avoids noise on cleanup PRs.

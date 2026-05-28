@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Contracts\HasPublicUrl;
 use App\Traits\HasSeo;
+use App\Traits\HasSlugRedirect;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,11 +19,12 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class Category extends Model implements HasMedia
+class Category extends Model implements HasMedia, HasPublicUrl
 {
     use HasFactory;
     use HasSeo;
     use HasSlug;
+    use HasSlugRedirect;
     use InteractsWithMedia;
     use SoftDeletes;
 
@@ -86,10 +89,14 @@ class Category extends Model implements HasMedia
     }
 
     /**
-     * Tree-level URL: /catalog/{slug}/
+     * Tree-level URL: /catalog/{slug}.
+     *
+     * Trailing slash deliberately omitted — Laravel's url() helper strips
+     * it anyway, and we want our stored Redirect rows to use the
+     * canonical no-trailing-slash form.
      */
     public function url(): string
     {
-        return url('/catalog/'.$this->slug.'/');
+        return url('/catalog/'.$this->slug);
     }
 }

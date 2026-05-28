@@ -6,7 +6,6 @@ namespace App\Filament\Pages;
 
 use App\Models\Setting;
 use BackedEnum;
-use Filament\Actions\Action;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -167,18 +166,6 @@ class Settings extends Page implements HasForms
                             ]),
                     ]),
             ]);
-    }
-
-    /**
-     * @return array<Action>
-     */
-    protected function getFormActions(): array
-    {
-        return [
-            Action::make('save')
-                ->label('Сохранить')
-                ->submit('save'),
-        ];
     }
 
     public function save(): void

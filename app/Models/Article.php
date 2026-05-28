@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Contracts\HasPublicUrl;
 use App\Traits\HasSeo;
+use App\Traits\HasSlugRedirect;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,11 +17,12 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class Article extends Model implements HasMedia
+class Article extends Model implements HasMedia, HasPublicUrl
 {
     use HasFactory;
     use HasSeo;
     use HasSlug;
+    use HasSlugRedirect;
     use InteractsWithMedia;
     use SoftDeletes;
 
@@ -68,7 +71,7 @@ class Article extends Model implements HasMedia
 
     public function url(): string
     {
-        return url('/blog/'.$this->slug.'/');
+        return url('/blog/'.$this->slug);
     }
 
     // ---- Scopes ----
