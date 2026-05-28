@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\EnsureNoindexInNonProd;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -21,6 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // group) so route-misses (the typical legacy-URL case) flow
         // through it — group middleware only runs after a route matches.
         $middleware->append(RedirectsMissingPages::class);
+
+        // Dev-only noindex header. Production is the only environment
+        // allowed to be indexed; everywhere else gets X-Robots-Tag on
+        // every response. See app/Http/Middleware/EnsureNoindexInNonProd.
+        $middleware->append(EnsureNoindexInNonProd::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

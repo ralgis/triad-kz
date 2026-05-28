@@ -5,7 +5,28 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/*
+ * triad.kz B2B theme.
+ *
+ * Brand color — muted industrial blue, picked for a serious
+ * construction-supplier feel without screaming "tech startup".
+ * Steel-gray neutrals carry the bulk of the UI; brand is reserved for
+ * primary CTAs and link accents so price tables, ГОСТ markings, and
+ * product specs stay readable.
+ *
+ * Display font Inter over the legacy Instrument Sans — better Cyrillic
+ * coverage and tighter at small sizes on mobile, our primary target.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-brand-50: oklch(0.97 0.014 240);
+    --color-brand-100: oklch(0.93 0.03 240);
+    --color-brand-200: oklch(0.86 0.06 240);
+    --color-brand-400: oklch(0.65 0.13 240);
+    --color-brand-500: oklch(0.55 0.15 240);
+    --color-brand-600: oklch(0.46 0.14 240);
+    --color-brand-700: oklch(0.38 0.12 240);
+    --color-brand-900: oklch(0.24 0.07 240);
 }

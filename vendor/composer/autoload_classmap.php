@@ -62,6 +62,8 @@ return array(
     'App\\Filament\\Resources\\Redirects\\Schemas\\RedirectForm' => $baseDir . '/app/Filament/Resources/Redirects/Schemas/RedirectForm.php',
     'App\\Filament\\Resources\\Redirects\\Tables\\RedirectsTable' => $baseDir . '/app/Filament/Resources/Redirects/Tables/RedirectsTable.php',
     'App\\Http\\Controllers\\Controller' => $baseDir . '/app/Http/Controllers/Controller.php',
+    'App\\Http\\Controllers\\RobotsController' => $baseDir . '/app/Http/Controllers/RobotsController.php',
+    'App\\Http\\Middleware\\EnsureNoindexInNonProd' => $baseDir . '/app/Http/Middleware/EnsureNoindexInNonProd.php',
     'App\\Http\\Requests\\CheckoutFormRequest' => $baseDir . '/app/Http/Requests/CheckoutFormRequest.php',
     'App\\Http\\Requests\\ContactFormRequest' => $baseDir . '/app/Http/Requests/ContactFormRequest.php',
     'App\\Mail\\ContactFormMail' => $baseDir . '/app/Mail/ContactFormMail.php',

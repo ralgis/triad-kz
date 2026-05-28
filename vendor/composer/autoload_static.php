@@ -946,6 +946,8 @@ class ComposerStaticInit2db3f723434a12fb0127e1533df470df
         'App\\Filament\\Resources\\Redirects\\Schemas\\RedirectForm' => __DIR__ . '/../..' . '/app/Filament/Resources/Redirects/Schemas/RedirectForm.php',
         'App\\Filament\\Resources\\Redirects\\Tables\\RedirectsTable' => __DIR__ . '/../..' . '/app/Filament/Resources/Redirects/Tables/RedirectsTable.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
+        'App\\Http\\Controllers\\RobotsController' => __DIR__ . '/../..' . '/app/Http/Controllers/RobotsController.php',
+        'App\\Http\\Middleware\\EnsureNoindexInNonProd' => __DIR__ . '/../..' . '/app/Http/Middleware/EnsureNoindexInNonProd.php',
         'App\\Http\\Requests\\CheckoutFormRequest' => __DIR__ . '/../..' . '/app/Http/Requests/CheckoutFormRequest.php',
         'App\\Http\\Requests\\ContactFormRequest' => __DIR__ . '/../..' . '/app/Http/Requests/ContactFormRequest.php',
         'App\\Mail\\ContactFormMail' => __DIR__ . '/../..' . '/app/Mail/ContactFormMail.php',
