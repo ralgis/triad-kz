@@ -1,11 +1,3 @@
-{{--
-    Placeholder home — Phase 2.1 ships only the layout/header/footer
-    foundation. Real hero / featured products / featured articles arrive
-    in Phase 2.2 (HomeController). Keeping this file in the same shape
-    as the eventual production version (extends layouts.app + content
-    section) means the smoke test we write today keeps working through
-    the upgrade.
---}}
 @extends('layouts.app', [
     'meta_title' => 'ТРИ АД Construction — ЖБИ в Алматы',
     'meta_description' => 'Производство и продажа железобетонных изделий: '
@@ -35,9 +27,48 @@
         </div>
     </section>
 
-    <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <p class="text-slate-500 italic">
-            Каталог категорий, рекомендованные товары и блог появятся в Phase 2.2.
-        </p>
-    </section>
+    @if($categories->isNotEmpty())
+        <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+            <div class="flex items-end justify-between gap-4 mb-8">
+                <h2 class="text-2xl sm:text-3xl font-semibold text-slate-900">Категории</h2>
+                <a href="{{ url('/catalog') }}" class="text-sm text-brand-600 hover:text-brand-700 font-medium whitespace-nowrap">
+                    Все категории →
+                </a>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                @foreach($categories as $category)
+                    <x-category-card :category="$category" />
+                @endforeach
+            </div>
+        </section>
+    @endif
+
+    @if($products->isNotEmpty())
+        <section class="bg-slate-50 py-12 lg:py-16">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <h2 class="text-2xl sm:text-3xl font-semibold text-slate-900 mb-8">Рекомендуем</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                    @foreach($products as $product)
+                        <x-product-card :product="$product" />
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+
+    @if($articles->isNotEmpty())
+        <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+            <div class="flex items-end justify-between gap-4 mb-8">
+                <h2 class="text-2xl sm:text-3xl font-semibold text-slate-900">Статьи</h2>
+                <a href="{{ url('/blog') }}" class="text-sm text-brand-600 hover:text-brand-700 font-medium whitespace-nowrap">
+                    Все статьи →
+                </a>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                @foreach($articles as $article)
+                    <x-article-card :article="$article" />
+                @endforeach
+            </div>
+        </section>
+    @endif
 @endsection
