@@ -12,6 +12,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RobotsController;
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -49,6 +50,12 @@ Route::post('/contacts', [ContactController::class, 'store'])
 
 // Env-aware robots.txt — dev blocks all crawlers, prod allows + Sitemap.
 Route::get('/robots.txt', RobotsController::class);
+
+// Sitemap built dynamically from published Categories / Products /
+// Articles / Pages. Cached at the HTTP layer in front of Plesk (will
+// land in deploy config); the request itself is a handful of indexed
+// SELECTs.
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 // Catch-all for content pages (about / gosts / payment / ...). MUST be
 // last — Laravel matches top-down and {page:slug} would otherwise

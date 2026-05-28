@@ -4,10 +4,12 @@
     Semantic breadcrumb. $items is an ordered list of [['label' => ..., 'url' => ...], ...]
     where the LAST item is the current page (rendered as plain text, no link).
 
-    JSON-LD BreadcrumbList schema lands in Phase 3 — until then we still
-    get full a11y benefit from the nav + ol + aria-current pattern.
+    Emits both the visual <nav> AND the BreadcrumbList JSON-LD so search
+    engines render rich breadcrumbs without us hand-wiring the schema
+    partial on every page.
 --}}
 @if(count($items) > 0)
+    @include('partials.schema.breadcrumb', ['items' => $items])
     <nav aria-label="Хлебные крошки" class="text-sm">
         <ol class="flex flex-wrap items-center gap-1 text-slate-500">
             <li class="flex items-center gap-1">

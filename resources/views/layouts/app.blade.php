@@ -18,6 +18,7 @@
     @include('partials.head')
     @fonts
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('partials.schema.organization')
 </head>
 <body class="min-h-full flex flex-col bg-white text-slate-800 antialiased {{ $body_class ?? '' }}">
     {{-- Skip-link for keyboard / screen-reader users. --}}

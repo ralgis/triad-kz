@@ -956,6 +956,7 @@ class ComposerStaticInit2db3f723434a12fb0127e1533df470df
         'App\\Http\\Controllers\\PageController' => __DIR__ . '/../..' . '/app/Http/Controllers/PageController.php',
         'App\\Http\\Controllers\\ProductController' => __DIR__ . '/../..' . '/app/Http/Controllers/ProductController.php',
         'App\\Http\\Controllers\\RobotsController' => __DIR__ . '/../..' . '/app/Http/Controllers/RobotsController.php',
+        'App\\Http\\Controllers\\SitemapController' => __DIR__ . '/../..' . '/app/Http/Controllers/SitemapController.php',
         'App\\Http\\Middleware\\EnsureNoindexInNonProd' => __DIR__ . '/../..' . '/app/Http/Middleware/EnsureNoindexInNonProd.php',
         'App\\Http\\Requests\\CheckoutFormRequest' => __DIR__ . '/../..' . '/app/Http/Requests/CheckoutFormRequest.php',
         'App\\Http\\Requests\\ContactFormRequest' => __DIR__ . '/../..' . '/app/Http/Requests/ContactFormRequest.php',

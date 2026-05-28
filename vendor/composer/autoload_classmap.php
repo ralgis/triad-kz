@@ -72,6 +72,7 @@ return array(
     'App\\Http\\Controllers\\PageController' => $baseDir . '/app/Http/Controllers/PageController.php',
     'App\\Http\\Controllers\\ProductController' => $baseDir . '/app/Http/Controllers/ProductController.php',
     'App\\Http\\Controllers\\RobotsController' => $baseDir . '/app/Http/Controllers/RobotsController.php',
+    'App\\Http\\Controllers\\SitemapController' => $baseDir . '/app/Http/Controllers/SitemapController.php',
     'App\\Http\\Middleware\\EnsureNoindexInNonProd' => $baseDir . '/app/Http/Middleware/EnsureNoindexInNonProd.php',
     'App\\Http\\Requests\\CheckoutFormRequest' => $baseDir . '/app/Http/Requests/CheckoutFormRequest.php',
     'App\\Http\\Requests\\ContactFormRequest' => $baseDir . '/app/Http/Requests/ContactFormRequest.php',

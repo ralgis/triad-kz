@@ -5,6 +5,7 @@
         ?: \Illuminate\Support\Str::limit(strip_tags($article->content ?? ''), 160),
     'og_image' => $article->getFirstMediaUrl('cover', 'og') ?: null,
     'og_type' => 'article',
+    'schema_jsonld' => view('partials.schema.article', compact('article'))->render(),
 ])
 
 @section('content')

@@ -6,6 +6,7 @@
     'og_image' => $product->getFirstMediaUrl('real', 'og')
         ?: $product->getFirstMediaUrl('blueprint', 'og') ?: null,
     'og_type' => 'product',
+    'schema_jsonld' => view('partials.schema.product', compact('product', 'category'))->render(),
 ])
 
 @php
