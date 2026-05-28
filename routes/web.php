@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RobotsController;
 use Illuminate\Support\Facades\Route;
@@ -36,5 +39,21 @@ Route::post('/checkout', [CheckoutController::class, 'store'])
 Route::get('/order/{order:order_number}', [OrderController::class, 'show'])->name('order.show');
 Route::get('/order/{order:order_number}/invoice', [OrderController::class, 'invoice'])->name('order.invoice');
 
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{article:slug}', [BlogController::class, 'show'])->name('blog.article');
+
+Route::get('/contacts', [ContactController::class, 'show'])->name('contacts.show');
+Route::post('/contacts', [ContactController::class, 'store'])
+    ->middleware('throttle:contact')
+    ->name('contacts.store');
+
 // Env-aware robots.txt — dev blocks all crawlers, prod allows + Sitemap.
 Route::get('/robots.txt', RobotsController::class);
+
+// Catch-all for content pages (about / gosts / payment / ...). MUST be
+// last — Laravel matches top-down and {page:slug} would otherwise
+// shadow every other GET above. Constrained to kebab-case so /robots.txt
+// and other file-extension paths don't accidentally match.
+Route::get('/{page:slug}', [PageController::class, 'show'])
+    ->where('page', '[a-z][a-z0-9-]*')
+    ->name('page.show');
