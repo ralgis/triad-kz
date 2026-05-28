@@ -6,6 +6,7 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'App\\Console\\Commands\\BuildLegacyRedirects' => $baseDir . '/app/Console/Commands/BuildLegacyRedirects.php',
     'App\\Console\\Commands\\CreateAdminCommand' => $baseDir . '/app/Console/Commands/CreateAdminCommand.php',
     'App\\Console\\Commands\\ImportTriadContent' => $baseDir . '/app/Console/Commands/ImportTriadContent.php',
     'App\\Contracts\\HasPublicUrl' => $baseDir . '/app/Contracts/HasPublicUrl.php',

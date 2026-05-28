@@ -29,7 +29,13 @@ final class DatabaseRedirector implements Redirector
         // Normalize incoming path to the same shape as stored `from`
         // (leading slash, no trailing slash). Otherwise `/old/` (visitor)
         // wouldn't match `/old` (admin or observer-stored).
-        $path = Redirect::normalizePath($request->getPathInfo()) ?? '/';
+        //
+        // Also URL-decode: the WP cutover map (BuildLegacyRedirects) stores
+        // decoded Cyrillic slugs because Yandex/Google index the decoded
+        // form for some accounts, while older crawlers still hit the
+        // percent-encoded URL. Decoding here lets one stored row match
+        // both shapes.
+        $path = Redirect::normalizePath(rawurldecode($request->getPathInfo())) ?? '/';
 
         $row = Redirect::query()->where('from', $path)->first();
         if ($row === null) {

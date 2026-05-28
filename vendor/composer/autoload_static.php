@@ -890,6 +890,7 @@ class ComposerStaticInit2db3f723434a12fb0127e1533df470df
     );
 
     public static $classMap = array (
+        'App\\Console\\Commands\\BuildLegacyRedirects' => __DIR__ . '/../..' . '/app/Console/Commands/BuildLegacyRedirects.php',
         'App\\Console\\Commands\\CreateAdminCommand' => __DIR__ . '/../..' . '/app/Console/Commands/CreateAdminCommand.php',
         'App\\Console\\Commands\\ImportTriadContent' => __DIR__ . '/../..' . '/app/Console/Commands/ImportTriadContent.php',
         'App\\Contracts\\HasPublicUrl' => __DIR__ . '/../..' . '/app/Contracts/HasPublicUrl.php',
