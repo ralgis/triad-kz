@@ -63,10 +63,8 @@
             "@php artisan config:clear --ansi @no_additional_args",
             "@php artisan test"
         ],
-        "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi",
-            "@php artisan filament:upgrade"
+        "_post-autoload-dump-disabled-on-purpose": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump deletes bootstrap/cache/packages.php and runs `php artisan package:discover` which needs proc_open. Plesk shared blocks proc_open, so we keep packages.php in the repo (regen locally after dependency changes) and skip the script entirely."
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
