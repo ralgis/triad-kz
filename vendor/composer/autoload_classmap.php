@@ -7,6 +7,7 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'App\\Console\\Commands\\CreateAdminCommand' => $baseDir . '/app/Console/Commands/CreateAdminCommand.php',
+    'App\\Console\\Commands\\ImportTriadContent' => $baseDir . '/app/Console/Commands/ImportTriadContent.php',
     'App\\Contracts\\HasPublicUrl' => $baseDir . '/app/Contracts/HasPublicUrl.php',
     'App\\Enums\\CustomerType' => $baseDir . '/app/Enums/CustomerType.php',
     'App\\Enums\\DeliveryMethod' => $baseDir . '/app/Enums/DeliveryMethod.php',
@@ -104,6 +105,7 @@ return array(
     'App\\Services\\Orders\\OrderService' => $baseDir . '/app/Services/Orders/OrderService.php',
     'App\\Support\\DimensionLabels' => $baseDir . '/app/Support/DimensionLabels.php',
     'App\\Support\\Migrations\\SeoFields' => $baseDir . '/app/Support/Migrations/SeoFields.php',
+    'App\\Support\\Translit' => $baseDir . '/app/Support/Translit.php',
     'App\\Traits\\HasSeo' => $baseDir . '/app/Traits/HasSeo.php',
     'App\\Traits\\HasSlugRedirect' => $baseDir . '/app/Traits/HasSlugRedirect.php',
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',

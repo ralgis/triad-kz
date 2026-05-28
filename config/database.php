@@ -116,6 +116,25 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        // Read-only connection to the legacy WordPress 4.3 / WooCommerce
+        // dump for the Phase 4 content seeder (triad:import-content).
+        // Defaults match the docker-compose helper we spin up locally for
+        // the import; on prod this connection is unused. Table prefix is
+        // baked in so Eloquent/query-builder calls reference unprefixed
+        // names — keep the seeder readable.
+        'wp_legacy' => [
+            'driver' => 'mysql',
+            'host' => env('WP_DB_HOST', '127.0.0.1'),
+            'port' => env('WP_DB_PORT', '33063'),
+            'database' => env('WP_DB_DATABASE', 'wp_legacy'),
+            'username' => env('WP_DB_USERNAME', 'root'),
+            'password' => env('WP_DB_PASSWORD', 'temp'),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => 'G5cX6018k4_',
+            'strict' => false,
+        ],
+
     ],
 
     /*

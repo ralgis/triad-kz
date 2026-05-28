@@ -891,6 +891,7 @@ class ComposerStaticInit2db3f723434a12fb0127e1533df470df
 
     public static $classMap = array (
         'App\\Console\\Commands\\CreateAdminCommand' => __DIR__ . '/../..' . '/app/Console/Commands/CreateAdminCommand.php',
+        'App\\Console\\Commands\\ImportTriadContent' => __DIR__ . '/../..' . '/app/Console/Commands/ImportTriadContent.php',
         'App\\Contracts\\HasPublicUrl' => __DIR__ . '/../..' . '/app/Contracts/HasPublicUrl.php',
         'App\\Enums\\CustomerType' => __DIR__ . '/../..' . '/app/Enums/CustomerType.php',
         'App\\Enums\\DeliveryMethod' => __DIR__ . '/../..' . '/app/Enums/DeliveryMethod.php',
@@ -988,6 +989,7 @@ class ComposerStaticInit2db3f723434a12fb0127e1533df470df
         'App\\Services\\Orders\\OrderService' => __DIR__ . '/../..' . '/app/Services/Orders/OrderService.php',
         'App\\Support\\DimensionLabels' => __DIR__ . '/../..' . '/app/Support/DimensionLabels.php',
         'App\\Support\\Migrations\\SeoFields' => __DIR__ . '/../..' . '/app/Support/Migrations/SeoFields.php',
+        'App\\Support\\Translit' => __DIR__ . '/../..' . '/app/Support/Translit.php',
         'App\\Traits\\HasSeo' => __DIR__ . '/../..' . '/app/Traits/HasSeo.php',
         'App\\Traits\\HasSlugRedirect' => __DIR__ . '/../..' . '/app/Traits/HasSlugRedirect.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
