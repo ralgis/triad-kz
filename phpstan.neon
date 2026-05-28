@@ -36,6 +36,13 @@ parameters:
         # Laravel-generated UserFactory return-type doesn't match Larastan's
         # narrowed array<model property,mixed> — Laravel default, not our code.
         - identifier: method.childReturnType
+        # Pest's chained expectations confuse PHPStan's template-type
+        # resolution (`expect($x)->toBe()->and($y)->toBe()`). Tests verify
+        # runtime behavior; we ignore static-only noise inside /tests.
+        - identifier: argument.templateType
+          path: tests/*
+        - identifier: missingType.iterableValue
+          path: tests/*
 
     # Don't fail when an ignore-pattern stops matching (e.g. we fixed an
     # error and the suppressor became unused). Avoids noise on cleanup PRs.

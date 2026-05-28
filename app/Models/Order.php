@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property PaymentMethod $payment_method
  * @property string|null $invoice_pdf_path
  * @property string|null $order_number
+ * @property string $subtotal
+ * @property string $total
  * @property array<int, array<string, mixed>>|null $status_history
  */
 class Order extends Model
