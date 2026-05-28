@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Categories\Pages;
 
+use App\Filament\Actions\InternalLinkPickerAction;
 use App\Filament\Resources\Categories\CategoryResource;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
@@ -17,6 +18,7 @@ class EditCategory extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            InternalLinkPickerAction::make(),
             DeleteAction::make(),
             ForceDeleteAction::make(),
             RestoreAction::make(),

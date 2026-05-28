@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum OrderStatus: string
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
+
+enum OrderStatus: string implements HasColor, HasLabel
 {
     case New = 'new';
     case Confirmed = 'confirmed';
@@ -41,5 +44,15 @@ enum OrderStatus: string
             self::Completed => 'success',
             self::Cancelled => 'danger',
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
+    }
+
+    public function getColor(): string
+    {
+        return $this->color();
     }
 }

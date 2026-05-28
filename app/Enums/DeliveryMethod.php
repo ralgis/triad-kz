@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum DeliveryMethod: string
+use Filament\Support\Contracts\HasLabel;
+
+enum DeliveryMethod: string implements HasLabel
 {
     case Pickup = 'pickup';
     case Delivery = 'delivery';
@@ -15,5 +17,10 @@ enum DeliveryMethod: string
             self::Pickup => 'Самовывоз',
             self::Delivery => 'Доставка по адресу',
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }

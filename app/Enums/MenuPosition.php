@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum MenuPosition: string
+use Filament\Support\Contracts\HasLabel;
+
+enum MenuPosition: string implements HasLabel
 {
     case Header = 'header';
     case Footer = 'footer';
@@ -17,5 +19,10 @@ enum MenuPosition: string
             self::Footer => 'Футер (основной)',
             self::FooterSecondary => 'Футер (доп. колонка)',
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }

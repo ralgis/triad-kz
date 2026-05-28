@@ -12,6 +12,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property OrderStatus $status
+ * @property CustomerType $customer_type
+ * @property DeliveryMethod $delivery_method
+ * @property PaymentMethod $payment_method
+ * @property string|null $invoice_pdf_path
+ * @property string|null $order_number
+ * @property array<int, array<string, mixed>>|null $status_history
+ */
 class Order extends Model
 {
     use HasFactory;

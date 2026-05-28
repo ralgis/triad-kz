@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum PaymentMethod: string
+use Filament\Support\Contracts\HasLabel;
+
+enum PaymentMethod: string implements HasLabel
 {
     case BankTransfer = 'bank_transfer';
     case Cash = 'cash';
@@ -23,5 +25,10 @@ enum PaymentMethod: string
     public function generatesInvoice(): bool
     {
         return $this === self::BankTransfer;
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }

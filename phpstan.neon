@@ -31,14 +31,15 @@ parameters:
         # to PHPStan without @property annotations on every model. We accept
         # this trade-off; real typos are caught at runtime by tests.
         - identifier: property.notFound
-        # Trait $casts JSON-arrays look like string|null to PHPStan even with
-        # Larastan, because casts() returns array<string,string>, not types.
-        - identifier: assign.propertyType
         # Defensive null-checks on optional Factory inputs are intentional.
         - identifier: nullsafe.neverNull
         # Laravel-generated UserFactory return-type doesn't match Larastan's
         # narrowed array<model property,mixed> — Laravel default, not our code.
         - identifier: method.childReturnType
+
+    # Don't fail when an ignore-pattern stops matching (e.g. we fixed an
+    # error and the suppressor became unused). Avoids noise on cleanup PRs.
+    reportUnmatchedIgnoredErrors: false
 
     # Postpone level 8 until project stabilizes (Phase 3). Goal is level 8.
     checkOctaneCompatibility: true

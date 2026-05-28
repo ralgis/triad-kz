@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Products\Pages;
 
+use App\Filament\Actions\InternalLinkPickerAction;
 use App\Filament\Resources\Products\ProductResource;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
@@ -17,6 +18,7 @@ class EditProduct extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            InternalLinkPickerAction::make(),
             DeleteAction::make(),
             ForceDeleteAction::make(),
             RestoreAction::make(),

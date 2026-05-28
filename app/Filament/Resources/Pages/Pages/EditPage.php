@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Pages\Pages;
 
+use App\Filament\Actions\InternalLinkPickerAction;
 use App\Filament\Resources\Pages\PageResource;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
@@ -17,6 +18,7 @@ class EditPage extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            InternalLinkPickerAction::make(),
             DeleteAction::make(),
             ForceDeleteAction::make(),
             RestoreAction::make(),
