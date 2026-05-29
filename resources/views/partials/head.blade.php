@@ -18,6 +18,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>{{ $title }}</title>
+
+<link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+<link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+<link rel="apple-touch-icon" href="{{ asset('favicon.png') }}">
 @if($description !== '')
     <meta name="description" content="{{ $description }}">
 @endif

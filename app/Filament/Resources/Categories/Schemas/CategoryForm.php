@@ -75,8 +75,8 @@ class CategoryForm
                     SpatieMediaLibraryFileUpload::make('cover')
                         ->label('Обложка категории')
                         ->collection('cover')
+                        ->disk('public')
                         ->image()
-                        ->imageEditor()
                         ->columnSpanFull(),
                 ]),
 

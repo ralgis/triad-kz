@@ -126,17 +126,15 @@ class ProductForm
                 ]),
 
             Section::make('Изображения')
-                ->description('Загрузите фото и чертежи. Перетащите за уголок чтобы поменять порядок. Первое фото показывается на карточке товара и в OG-превью. При загрузке можно обрезать (1:1).')
+                ->description('Загрузите фото и чертежи. Перетащите за уголок чтобы поменять порядок. Первое фото показывается на карточке товара и в OG-превью.')
                 ->schema([
                     SpatieMediaLibraryFileUpload::make('images')
                         ->collection('images')
+                        ->disk('public')
                         ->multiple()
                         ->reorderable()
                         ->appendFiles()
                         ->image()
-                        ->imageEditor()
-                        ->imageEditorAspectRatios(['1:1'])
-                        ->imageEditorMode(2)
                         ->panelLayout('grid')
                         ->columnSpanFull(),
                 ]),

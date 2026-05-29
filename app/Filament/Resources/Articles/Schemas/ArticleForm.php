@@ -56,8 +56,8 @@ class ArticleForm
                     SpatieMediaLibraryFileUpload::make('cover')
                         ->label('Обложка статьи')
                         ->collection('cover')
+                        ->disk('public')
                         ->image()
-                        ->imageEditor()
                         ->helperText('1200×630 — идеально для OG + hero.')
                         ->columnSpanFull(),
 

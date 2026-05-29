@@ -74,9 +74,10 @@ class Settings extends Page implements HasForms
                                     SpatieMediaLibraryFileUpload::make('logo')
                                         ->label('Логотип')
                                         ->collection('logo')
+                                        ->disk('public')
                                         ->image()
-                                        ->imageEditor()
-                                        ->columnSpanFull(),
+                                        ->columnSpanFull()
+                                        ->helperText('Подготовь файл заранее (~200×80 px). Кропер не используется — на Plesk shared его base64-блобы не доходят до файловой системы.'),
                                 ]),
                             ]),
 
@@ -144,9 +145,10 @@ class Settings extends Page implements HasForms
                                     SpatieMediaLibraryFileUpload::make('og_default')
                                         ->label('OG-картинка по умолчанию')
                                         ->collection('og_default')
+                                        ->disk('public')
                                         ->image()
-                                        ->imageEditor()
-                                        ->columnSpanFull(),
+                                        ->columnSpanFull()
+                                        ->helperText('Подготовь файл 1200×630 px заранее.'),
                                     Textarea::make('schema_org_organization')
                                         ->label('Schema.org Organization (JSON-LD override)')
                                         ->rows(8)
