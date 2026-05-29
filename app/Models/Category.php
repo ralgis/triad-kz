@@ -72,6 +72,9 @@ class Category extends Model implements HasMedia, HasPublicUrl
         return $this->hasMany(self::class, 'parent_id')->orderBy('order');
     }
 
+    /**
+     * @return BelongsToMany<Product, $this>
+     */
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class);

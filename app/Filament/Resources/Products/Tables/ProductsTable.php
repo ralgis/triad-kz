@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Products\Tables;
 
+use App\Models\Gost;
 use App\Models\Product;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -55,8 +56,8 @@ class ProductsTable
                 TextColumn::make('standards')
                     ->label('Стандарт')
                     ->badge()
-                    ->getStateUsing(fn (Product $record) => $record->gosts
-                        ->map(fn ($g) => $g->fullLabel())
+                    ->getStateUsing(fn (Product $record): array => $record->gosts
+                        ->map(fn (Gost $g): string => $g->fullLabel())
                         ->all())
                     ->placeholder('—')
                     ->toggleable(),

@@ -25,7 +25,7 @@ final class CatalogController extends Controller
      * inputs whose column has no data in the category) AND the
      * actual query-builder where-clauses.
      *
-     * @var list<array{0:string,1:string,2:string,3:float}>
+     * @var list<array{0:string,1:string,2:string,3:int|float}>
      */
     private const NUMERIC_FILTERS = [
         ['length_mm', 'Длина', 'мм', 1],
@@ -193,10 +193,16 @@ final class CatalogController extends Controller
         foreach (array_keys($meta['numeric']) as $column) {
             $min = $request->query("{$column}_min");
             $max = $request->query("{$column}_max");
+            // Column name comes from NUMERIC_FILTERS whitelist —
+            // safe to interpolate. Larastan's «model property» type
+            // can't see this is a real Product column from a static
+            // string, so suppress the strict-type complaints here.
             if (is_numeric($min)) {
+                // @phpstan-ignore-next-line argument.type
                 $query->where("products.{$column}", '>=', $min);
             }
             if (is_numeric($max)) {
+                // @phpstan-ignore-next-line argument.type
                 $query->where("products.{$column}", '<=', $max);
             }
         }

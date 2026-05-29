@@ -82,6 +82,10 @@ final class ExtractProductSpecs extends Command
             }
 
             if (! $dryRun) {
+                // Keys come from LABEL_MAP — all valid Product columns.
+                // Larastan's «model property» strict type can't verify
+                // that from the generic string keys, hence the ignore.
+                // @phpstan-ignore-next-line argument.type
                 $product->update($extracted);
             }
 

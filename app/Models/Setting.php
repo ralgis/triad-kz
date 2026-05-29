@@ -16,6 +16,10 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  *
  * Always row id=1. Use Setting::current() to fetch and create-if-missing.
  * Cache it where it matters (header/footer partials) — see config('triad.settings_cache_ttl').
+ *
+ * @property list<array{day:string,is_open:bool,from:?string,to:?string}>|null $working_hours
+ * @property list<array{date:string,status:string,from:?string,to:?string,note:?string}>|null $special_days
+ * @property array<string,mixed>|null $schema_org_organization
  */
 class Setting extends Model implements HasMedia
 {
@@ -156,32 +160,37 @@ class Setting extends Model implements HasMedia
         $when ??= now()->toImmutable();
 
         $special = collect($this->special_days ?? [])
-            ->first(fn ($d) => ($d['date'] ?? null) === $when->toDateString());
+            ->first(fn (array $d): bool => $d['date'] === $when->toDateString());
 
         if ($special !== null) {
-            if (($special['status'] ?? 'closed') === 'closed') {
+            if ($special['status'] === 'closed') {
                 return null;
             }
 
-            $from = $special['from'] ?? null;
-            $to = $special['to'] ?? null;
+            $from = $special['from'];
+            $to = $special['to'];
             if ($from === null || $to === null) {
                 return null;
             }
 
-            return ['from' => $from, 'to' => $to, 'note' => $special['note'] ?? null];
+            $row = ['from' => $from, 'to' => $to];
+            if ($special['note'] !== null) {
+                $row['note'] = $special['note'];
+            }
+
+            return $row;
         }
 
         $dayKey = strtolower($when->format('D'));
         $today = collect($this->working_hours ?? [])
-            ->first(fn ($d) => ($d['day'] ?? null) === $dayKey);
+            ->first(fn (array $d): bool => $d['day'] === $dayKey);
 
-        if ($today === null || ! ($today['is_open'] ?? false)) {
+        if ($today === null || ! $today['is_open']) {
             return null;
         }
 
-        $from = $today['from'] ?? null;
-        $to = $today['to'] ?? null;
+        $from = $today['from'];
+        $to = $today['to'];
         if ($from === null || $to === null) {
             return null;
         }
@@ -215,8 +224,9 @@ class Setting extends Model implements HasMedia
         $current = null;
 
         foreach (array_keys(self::DAYS) as $day) {
+            /** @var array{day:string,is_open:bool,from:?string,to:?string}|null $entry */
             $entry = $byDay->get($day);
-            $key = ($entry && ($entry['is_open'] ?? false))
+            $key = ($entry !== null && $entry['is_open'])
                 ? ($entry['from'] ?? '?').'-'.($entry['to'] ?? '?')
                 : 'closed';
 
@@ -229,9 +239,9 @@ class Setting extends Model implements HasMedia
                 $current = ['key' => $key, 'days' => [$day]];
             }
         }
-        if ($current !== null) {
-            $groups[] = $current;
-        }
+        // DAYS has 7 entries so $current is guaranteed set by the
+        // loop's final iteration — no null-guard needed here.
+        $groups[] = $current;
 
         return array_map(function (array $g): string {
             $first = $g['days'][0];
@@ -260,8 +270,9 @@ class Setting extends Model implements HasMedia
         $current = null;
 
         foreach (array_keys(self::DAYS) as $day) {
+            /** @var array{day:string,is_open:bool,from:?string,to:?string}|null $entry */
             $entry = $byDay->get($day);
-            $key = ($entry && ($entry['is_open'] ?? false))
+            $key = ($entry !== null && $entry['is_open'])
                 ? ($entry['from'] ?? '?').'-'.($entry['to'] ?? '?')
                 : null;
 

@@ -168,11 +168,17 @@ class Product extends Model implements HasMedia, HasPublicUrl
             ->doNotGenerateSlugsOnUpdate();
     }
 
+    /**
+     * @return BelongsToMany<Category, $this>
+     */
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class);
     }
 
+    /**
+     * @return BelongsToMany<Gost, $this>
+     */
     public function gosts(): BelongsToMany
     {
         return $this->belongsToMany(Gost::class);
@@ -183,6 +189,8 @@ class Product extends Model implements HasMedia, HasPublicUrl
      * recommendations. Symmetric in concept (see migration 0230);
      * sync uses syncComplementarySymmetric() below to keep both
      * directions in the pivot.
+     *
+     * @return BelongsToMany<self, $this>
      */
     public function complementaryProducts(): BelongsToMany
     {
@@ -252,7 +260,7 @@ class Product extends Model implements HasMedia, HasPublicUrl
             ? $this->categories->first()
             : $this->categories()->first();
 
-        if ($category === null) {
+        if (! $category instanceof Category) {
             return new Collection;
         }
 

@@ -109,6 +109,8 @@ class Gost extends Model implements HasPublicUrl
      * Parent ГОСТ for a Серия (e.g. Серия 3.900.1-14 → ГОСТ 8020-90).
      * Null when the series stands on its own (e.g. Серия 3.006.1-2.87)
      * or for ГОСТ records themselves.
+     *
+     * @return BelongsTo<self, $this>
      */
     public function relatesToGost(): BelongsTo
     {
@@ -119,6 +121,8 @@ class Gost extends Model implements HasPublicUrl
      * Reverse of relatesToGost — series derived from this ГОСТ. Useful
      * for the public /gosts/ page so a ГОСТ row can list its working-
      * drawing catalogs inline.
+     *
+     * @return HasMany<self, $this>
      */
     public function series(): HasMany
     {
@@ -130,6 +134,8 @@ class Gost extends Model implements HasPublicUrl
      * when the standard is still current or when its replacement isn't
      * tracked in our reference (in which case `superseded_note` may
      * carry the textual successor name).
+     *
+     * @return BelongsTo<self, $this>
      */
     public function supersededBy(): BelongsTo
     {
@@ -139,6 +145,8 @@ class Gost extends Model implements HasPublicUrl
     /**
      * Reverse — records this one replaced. A new edition may replace
      * multiple historical predecessors in principle.
+     *
+     * @return HasMany<self, $this>
      */
     public function predecessors(): HasMany
     {
