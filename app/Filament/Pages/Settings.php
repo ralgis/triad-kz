@@ -6,9 +6,16 @@ namespace App\Filament\Pages;
 
 use App\Models\Setting;
 use BackedEnum;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ViewField;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -51,7 +58,17 @@ class Settings extends Page implements HasForms
 
     public function mount(): void
     {
-        $this->form->fill(Setting::current()->attributesToArray());
+        $data = Setting::current()->attributesToArray();
+
+        // Seed the 7-row working-hours Repeater with sensible defaults
+        // on first load — otherwise it'd render zero rows and the admin
+        // would have to manually add each day, which is the exact UX
+        // we replaced the freeform Textarea to avoid.
+        if (empty($data['working_hours'])) {
+            $data['working_hours'] = self::defaultWorkingHours();
+        }
+
+        $this->form->fill($data);
     }
 
     public function form(Schema $schema): Schema
@@ -101,11 +118,83 @@ class Settings extends Page implements HasForms
                                     TextInput::make('address')
                                         ->label('Адрес офиса')
                                         ->columnSpanFull(),
-                                    Textarea::make('working_hours')
-                                        ->label('Время работы')
-                                        ->rows(3)
+                                    Section::make('Время работы')
+                                        ->description('Расписание по дням недели. Выключи переключатель если день — выходной.')
                                         ->columnSpanFull()
-                                        ->helperText('Например: Пн-Пт 9:00-18:00; Сб 10:00-15:00; Вс выходной.'),
+                                        ->schema([
+                                            Repeater::make('working_hours')
+                                                ->label('')
+                                                ->columns(4)
+                                                ->schema([
+                                                    Hidden::make('day'),
+                                                    Placeholder::make('day_label')
+                                                        ->label('')
+                                                        ->content(fn ($get): string => Setting::DAYS[$get('day')] ?? '?'),
+                                                    Toggle::make('is_open')
+                                                        ->label('Работаем')
+                                                        ->default(true)
+                                                        ->live(),
+                                                    TimePicker::make('from')
+                                                        ->label('Открытие')
+                                                        ->seconds(false)
+                                                        ->default('09:00')
+                                                        ->disabled(fn ($get) => ! $get('is_open')),
+                                                    TimePicker::make('to')
+                                                        ->label('Закрытие')
+                                                        ->seconds(false)
+                                                        ->default('18:00')
+                                                        ->disabled(fn ($get) => ! $get('is_open')),
+                                                ])
+                                                ->default(self::defaultWorkingHours())
+                                                ->addable(false)
+                                                ->deletable(false)
+                                                ->reorderable(false)
+                                                ->itemLabel(fn (array $state): ?string => Setting::DAYS[$state['day'] ?? ''] ?? null),
+                                        ]),
+
+                                    Section::make('Особые дни')
+                                        ->description('Праздники, переносы, короткие дни. Если дата не указана — действует обычное недельное расписание.')
+                                        ->columnSpanFull()
+                                        ->collapsed()
+                                        ->schema([
+                                            Repeater::make('special_days')
+                                                ->label('')
+                                                ->columns(4)
+                                                ->schema([
+                                                    DatePicker::make('date')
+                                                        ->label('Дата')
+                                                        ->displayFormat('d.m.Y')
+                                                        ->required(),
+                                                    Select::make('status')
+                                                        ->label('Статус')
+                                                        ->options([
+                                                            'closed' => 'Выходной',
+                                                            'short' => 'Короткий день',
+                                                        ])
+                                                        ->default('closed')
+                                                        ->live(),
+                                                    TimePicker::make('from')
+                                                        ->label('Открытие')
+                                                        ->seconds(false)
+                                                        ->visible(fn ($get) => $get('status') === 'short'),
+                                                    TimePicker::make('to')
+                                                        ->label('Закрытие')
+                                                        ->seconds(false)
+                                                        ->visible(fn ($get) => $get('status') === 'short'),
+                                                    TextInput::make('note')
+                                                        ->label('Заметка (показывается рядом с датой)')
+                                                        ->placeholder('Например: Новый год, Наурыз, корпоратив')
+                                                        ->columnSpanFull(),
+                                                ])
+                                                ->itemLabel(fn (array $state): ?string => isset($state['date'])
+                                                    ? $state['date'].($state['note'] ?? '' ? ' — '.$state['note'] : '')
+                                                    : null)
+                                                ->collapsed()
+                                                ->reorderable(false)
+                                                ->defaultItems(0)
+                                                ->addActionLabel('+ Добавить особый день'),
+                                        ]),
+
                                     ViewField::make('map')
                                         ->view('filament.forms.leaflet-map-picker')
                                         ->columnSpanFull(),
@@ -193,5 +282,25 @@ class Settings extends Page implements HasForms
             ->title('Настройки сохранены')
             ->success()
             ->send();
+    }
+
+    /**
+     * 7 rows in the Mon→Sun order with sensible defaults — Mon–Fri
+     * 09:00-18:00, weekends closed. Used when the admin opens the
+     * form for the first time and the JSON column is empty.
+     *
+     * @return list<array{day:string, is_open:bool, from:?string, to:?string}>
+     */
+    private static function defaultWorkingHours(): array
+    {
+        return [
+            ['day' => 'mon', 'is_open' => true, 'from' => '09:00', 'to' => '18:00'],
+            ['day' => 'tue', 'is_open' => true, 'from' => '09:00', 'to' => '18:00'],
+            ['day' => 'wed', 'is_open' => true, 'from' => '09:00', 'to' => '18:00'],
+            ['day' => 'thu', 'is_open' => true, 'from' => '09:00', 'to' => '18:00'],
+            ['day' => 'fri', 'is_open' => true, 'from' => '09:00', 'to' => '18:00'],
+            ['day' => 'sat', 'is_open' => false, 'from' => null, 'to' => null],
+            ['day' => 'sun', 'is_open' => false, 'from' => null, 'to' => null],
+        ];
     }
 }

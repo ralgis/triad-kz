@@ -8,6 +8,20 @@
     // shape below doesn't cover (e.g. extra sameAs, awards, founder).
     $override = $settings->schema_org_organization;
 
+    $openingHours = $settings->workingHoursForSchema();
+    $specialDays = collect($settings->special_days ?? [])
+        ->filter(fn ($d) => ! empty($d['date']))
+        ->map(fn ($d) => array_filter([
+            '@type' => 'OpeningHoursSpecification',
+            'validFrom' => $d['date'],
+            'validThrough' => $d['date'],
+            'opens' => ($d['status'] ?? '') === 'short' ? ($d['from'] ?? null) : null,
+            'closes' => ($d['status'] ?? '') === 'short' ? ($d['to'] ?? null) : null,
+            'description' => $d['note'] ?? null,
+        ]))
+        ->values()
+        ->all();
+
     $data = is_array($override) && $override !== []
         ? $override
         : array_filter([
@@ -29,6 +43,8 @@
                 'propertyID' => 'БИН',
                 'value' => $settings->company_bin,
             ] : null,
+            'openingHours' => $openingHours ?: null,
+            'specialOpeningHoursSpecification' => $specialDays ?: null,
         ]);
 @endphp
 <script type="application/ld+json">

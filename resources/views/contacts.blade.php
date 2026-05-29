@@ -43,10 +43,47 @@
                                 <dd class="mt-1 text-slate-800">{{ $settings->address }}</dd>
                             </div>
                         @endif
-                        @if($settings->working_hours)
+                        @php($scheduleLines = $settings->workingHoursLines())
+                        @if(! empty($scheduleLines))
                             <div>
-                                <dt class="text-sm text-slate-500">Часы работы</dt>
-                                <dd class="mt-1 text-slate-800">{{ $settings->working_hours }}</dd>
+                                <dt class="text-sm text-slate-500 flex items-center gap-2">
+                                    Часы работы
+                                    @if($settings->isOpenNow())
+                                        <span class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                                            сейчас открыто
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                                            <span class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
+                                            закрыто
+                                        </span>
+                                    @endif
+                                </dt>
+                                <dd class="mt-1 text-slate-800 space-y-0.5">
+                                    @foreach($scheduleLines as $line)
+                                        <div class="text-sm">{{ $line }}</div>
+                                    @endforeach
+                                </dd>
+                                @php($specials = collect($settings->special_days ?? [])->take(3))
+                                @if($specials->isNotEmpty())
+                                    <dd class="mt-2 text-xs text-slate-500">
+                                        Особые дни:
+                                        @foreach($specials as $sd)
+                                            <span class="block">
+                                                {{ \Carbon\Carbon::parse($sd['date'])->translatedFormat('d.m.Y') }} —
+                                                @if(($sd['status'] ?? '') === 'short' && ! empty($sd['from']) && ! empty($sd['to']))
+                                                    {{ $sd['from'] }}–{{ $sd['to'] }}
+                                                @else
+                                                    выходной
+                                                @endif
+                                                @if(! empty($sd['note']))
+                                                    ({{ $sd['note'] }})
+                                                @endif
+                                            </span>
+                                        @endforeach
+                                    </dd>
+                                @endif
                             </div>
                         @endif
                     </dl>
