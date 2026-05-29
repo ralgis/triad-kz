@@ -53,6 +53,14 @@ parameters:
         # don't have. The config key is only used by that package.
         - identifier: class.notFound
           path: config/media-library.php
+        # spatie/media-library's Conversion class uses __call magic to
+        # proxy width/height/etc. through to the underlying ImageDriver
+        # while keeping the chain returning Conversion. PHPStan can't
+        # see the magic, so chained calls like `->width(300)->height(300)
+        # ->nonOptimized()` look as if nonOptimized() is being called on
+        # ImageDriver. At runtime it lands on Conversion correctly.
+        - message: '#Call to an undefined method Spatie\\Image\\Drivers\\ImageDriver::nonOptimized#'
+          path: app/Models/*
 
     # Don't fail when an ignore-pattern stops matching (e.g. we fixed an
     # error and the suppressor became unused). Avoids noise on cleanup PRs.
