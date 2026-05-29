@@ -36,5 +36,12 @@
     </main>
 
     @include('partials.footer')
+
+    {{--
+        Analytics last — counter init scripts work on full DOM, no need
+        to load earlier. Self-no-ops in non-production env, so it's safe
+        to keep unconditionally included.
+    --}}
+    @include('partials.analytics')
 </body>
 </html>

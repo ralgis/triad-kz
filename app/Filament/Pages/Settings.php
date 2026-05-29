@@ -288,9 +288,16 @@ class Settings extends Page implements HasForms
                                             ? null
                                             : json_decode((string) $state, associative: true)),
                                     TextInput::make('analytics_yandex_id')
-                                        ->label('Яндекс.Метрика ID'),
+                                        ->label('Яндекс.Метрика — Counter ID')
+                                        ->placeholder('38595400')
+                                        ->maxLength(20)
+                                        ->helperText('Только цифры. Найти можно в metrika.yandex.ru → ваш счётчик → Настройки. Скрипт счётчика рендерится только в production-окружении.'),
+
                                     TextInput::make('analytics_google_id')
-                                        ->label('Google Analytics ID'),
+                                        ->label('Google Analytics 4 — Measurement ID')
+                                        ->placeholder('G-XXXXXXXXXX')
+                                        ->maxLength(20)
+                                        ->helperText('Формат G-XXXXXXXX (GA4). Старый Universal Analytics (UA-…) отключен Google\'ом с 01.07.2023 — не работает, можно не вписывать. Скрипт рендерится только в production.'),
                                 ]),
                             ]),
                     ]),
