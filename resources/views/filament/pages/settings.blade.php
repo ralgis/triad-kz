@@ -3,12 +3,12 @@
         {{ $this->form }}
 
         {{--
-            mt-8 keeps the button floating clear of the «Адрес офиса»
-            section's bottom border — `pt-6 border-t` made it read as
-            «attached to the card above» visually. Cleaner as a free-
-            standing toolbar.
+            mt-12 keeps a clear gap between the form's last input card
+            and the Save button — mt-8 was too tight against the card,
+            user reported it as «прилипшая». Free-standing toolbar with
+            real breathing room.
         --}}
-        <div class="flex justify-end gap-3 mt-8">
+        <div class="flex justify-end gap-3 mt-12">
             <x-filament::button type="submit" size="lg">
                 Сохранить
             </x-filament::button>

@@ -60,6 +60,23 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::FOOTER,
                 fn (): string => ViewFacade::make('filament.admin-footer')->render(),
             )
+            ->renderHook(
+                PanelsRenderHook::STYLES_AFTER,
+                fn (): string => <<<'HTML'
+                    <style>
+                        /*
+                         * Margin between form content and the Save/Cancel
+                         * action toolbar in Filament-generated forms.
+                         * Class is `.fi-sc-actions` per Filament v5
+                         * compiled markup — applies to every resource
+                         * Create/Edit page automatically.
+                         */
+                        .fi-sc-form > .fi-sc-actions {
+                            margin-top: 2rem;
+                        }
+                    </style>
+                    HTML,
+            )
             ->authMiddleware([
                 Authenticate::class,
             ]);
