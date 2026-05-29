@@ -30,11 +30,21 @@
                             </a>
                         </li>
                     @endif
-                    @if($settings->address)
-                        <li>{{ $settings->address }}</li>
+                    @if($settings->address || $settings->city)
+                        <li>
+                            @if($settings->address)<div>{{ $settings->address }}</div>@endif
+                            @if($settings->postal_code || $settings->city)
+                                <div>{{ trim(($settings->postal_code ?? '').' '.($settings->city ?? '')) }}</div>
+                            @endif
+                        </li>
                     @endif
-                    @if($settings->working_hours)
-                        <li>{{ $settings->working_hours }}</li>
+                    @php($scheduleLines = $settings->workingHoursLines())
+                    @if(! empty($scheduleLines))
+                        <li class="space-y-0.5">
+                            @foreach($scheduleLines as $line)
+                                <div>{{ $line }}</div>
+                            @endforeach
+                        </li>
                     @endif
                 </ul>
             </div>
