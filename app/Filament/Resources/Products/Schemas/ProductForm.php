@@ -266,6 +266,29 @@ class ProductForm
                         ->columnSpanFull(),
                 ]),
 
+            Section::make('С этим товаром покупают')
+                ->description('Кросс-категорийные связи для блока «С этим товаром покупают» на странице товара. Связь симметрична — если выберешь товар А, ты автоматически появишься в его списке.')
+                ->collapsed()
+                ->schema([
+                    Select::make('complementaryProducts')
+                        ->label('Сопутствующие товары')
+                        ->multiple()
+                        ->preload()
+                        ->searchable()
+                        ->relationship(
+                            'complementaryProducts',
+                            'name',
+                            fn ($query, ?Product $record) => $query
+                                ->when($record, fn ($q) => $q->where('products.id', '!=', $record->id))
+                                ->where('products.published', true)
+                                ->orderBy('products.name'),
+                        )
+                        ->saveRelationshipsUsing(function (Product $record, $state) {
+                            $record->syncComplementarySymmetric((array) $state);
+                        })
+                        ->helperText('Выбери ~4-8 товаров, которые покупают вместе с этим. Пример: кольцо КС10.6 + плита перекрытия ПП10-1 + опорное кольцо КО6. Блок «Также в этой категории» наполняется автоматически — сюда дублировать не нужно.'),
+                ]),
+
             Section::make('Публикация')
                 ->description('Опубликовано = вообще доступно (false → 404). Показывать в каталоге = в листингах и sitemap (false → прямой URL работает, но в нав не виден — для архивных позиций со старыми внешними ссылками).')
                 ->columns(3)

@@ -28,6 +28,22 @@ final class ProductController extends Controller
             abort(404);
         }
 
-        return view('catalog.product', compact('category', 'product'));
+        // Eager-load the two related-products blocks. complementaryProducts
+        // is the admin-curated cross-category set; relatedInCategory is
+        // computed below using its own with() chain.
+        $product->load([
+            'complementaryProducts' => fn ($q) => $q
+                ->where('products.published', true)
+                ->where('products.listed', true)
+                ->with(['categories:id,slug', 'gosts']),
+        ]);
+
+        $complementary = $product->complementaryProducts;
+        $alsoInCategory = $product->relatedInCategory(
+            limit: 6,
+            exclude: $complementary->pluck('id')->all(),
+        );
+
+        return view('catalog.product', compact('category', 'product', 'complementary', 'alsoInCategory'));
     }
 }

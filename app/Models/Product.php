@@ -8,11 +8,13 @@ use App\Contracts\HasPublicUrl;
 use App\Traits\HasSeo;
 use App\Traits\HasSlugRedirect;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -174,6 +176,93 @@ class Product extends Model implements HasMedia, HasPublicUrl
     public function gosts(): BelongsToMany
     {
         return $this->belongsToMany(Gost::class);
+    }
+
+    /**
+     * «С этим товаром покупают» — admin-curated cross-category
+     * recommendations. Symmetric in concept (see migration 0230);
+     * sync uses syncComplementarySymmetric() below to keep both
+     * directions in the pivot.
+     */
+    public function complementaryProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            self::class,
+            'complementary_products',
+            'product_id',
+            'complementary_product_id',
+        )
+            ->withPivot('sort_order')
+            ->orderByPivot('sort_order');
+    }
+
+    /**
+     * Symmetric M2M sync: writes both (this → each) and (each → this)
+     * rows so the relationship reads cleanly from either side and the
+     * admin can manage links from either product's form.
+     *
+     * Wrapped in a transaction so a partial failure doesn't leave the
+     * pivot half-mirrored. Self-references are filtered out — a
+     * product can't be its own complement.
+     *
+     * @param  array<int|string>  $productIds
+     */
+    public function syncComplementarySymmetric(array $productIds): void
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', $productIds),
+            fn (int $id) => $id > 0 && $id !== $this->id,
+        )));
+
+        DB::transaction(function () use ($ids) {
+            // 1. Forward — this product's row reflects the admin's choice.
+            $this->complementaryProducts()->sync($ids);
+
+            // 2. Inverse — make sure each chosen product carries us back.
+            foreach ($ids as $cid) {
+                DB::table('complementary_products')->updateOrInsert(
+                    ['product_id' => $cid, 'complementary_product_id' => $this->id],
+                    ['sort_order' => 0],
+                );
+            }
+
+            // 3. Cleanup inverse rows for products the admin removed
+            //    from the list — otherwise old picks linger pointing
+            //    back at us.
+            DB::table('complementary_products')
+                ->where('complementary_product_id', $this->id)
+                ->whereNotIn('product_id', $ids ?: [0])
+                ->delete();
+        });
+    }
+
+    /**
+     * «Также в этой категории» — auto-derived siblings from the
+     * product's first category. Excludes the current product, soft-
+     * deleted / unpublished / unlisted rows, and an optional list of
+     * other ids (used to dedupe against the complementary block on
+     * the same detail page).
+     *
+     * @param  array<int>  $exclude
+     * @return Collection<int, Product>
+     */
+    public function relatedInCategory(int $limit = 6, array $exclude = []): Collection
+    {
+        $category = $this->relationLoaded('categories')
+            ? $this->categories->first()
+            : $this->categories()->first();
+
+        if ($category === null) {
+            return new Collection;
+        }
+
+        return $category->products()
+            ->where('products.published', true)
+            ->where('products.listed', true)
+            ->whereNotIn('products.id', array_merge($exclude, [$this->id]))
+            ->with(['categories:id,slug', 'gosts'])
+            ->limit($limit)
+            ->get();
     }
 
     public function orderItems(): HasMany

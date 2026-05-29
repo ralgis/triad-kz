@@ -232,5 +232,35 @@
                 </div>
             </div>
         @endif
+
+        {{--
+            Related-products blocks. Two semantically different sets:
+              * complementaryProducts (admin-curated, cross-category)
+              * relatedInCategory (auto, same-category siblings, deduped
+                against complementaryProducts in the controller)
+            Each block self-hides when empty so we don't render empty
+            section headers.
+        --}}
+        @if($complementary->isNotEmpty())
+            <section class="mt-16 pt-8 border-t border-slate-200">
+                <h2 class="text-xl font-semibold text-slate-900 mb-6">С этим товаром покупают</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    @foreach($complementary as $cp)
+                        <x-product-card :product="$cp" />
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if($alsoInCategory->isNotEmpty())
+            <section class="mt-16 pt-8 border-t border-slate-200">
+                <h2 class="text-xl font-semibold text-slate-900 mb-6">Также в категории «{{ $category->name }}»</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    @foreach($alsoInCategory as $sibling)
+                        <x-product-card :product="$sibling" />
+                    @endforeach
+                </div>
+            </section>
+        @endif
     </div>
 @endsection
