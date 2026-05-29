@@ -1,24 +1,17 @@
 {{--
     Leaflet + OpenStreetMap picker for the Settings → Контакты form.
     Click on map drops/moves a marker, the picked lat/lng push back into
-    the form's `data.map_lat` / `data.map_lng` properties via Livewire's
-    `$wire.set()`.
+    the form's `data.map_lat` / `data.map_lng` properties via Livewire.
 
     `wire:ignore` on the wrapper because Leaflet mounts a complex DOM
     that Livewire morphdom would tear up on every re-render.
 
     Assets are loaded via CDN inside the field so we don't have to wire
-    Leaflet into Filament's asset pipeline (it's only used on this one
-    settings tab).
+    Leaflet into Filament's asset pipeline.
 --}}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
-<div
-    x-data="triadLeafletPicker"
-    x-init="boot()"
-    wire:ignore
-    class="space-y-2"
->
+<div x-data="triadLeafletPicker" wire:ignore class="space-y-2">
     <div x-ref="map" class="h-80 w-full rounded border border-slate-300 bg-slate-100"></div>
     <p class="text-xs text-slate-500">
         Клик по карте ставит маркер. Координаты автоматически записываются в поля «Широта» и «Долгота» ниже.
@@ -38,7 +31,12 @@
             defaultLng: 76.900101,
             defaultZoom: 15,
 
-            async boot() {
+            // Alpine auto-runs init() on mount. We use it to GATE the
+            // actual Leaflet work behind an async script load — naming
+            // the inner method something other than init() because if
+            // we called it init() too, Alpine would invoke it BEFORE the
+            // script promise resolves and `L` would be undefined.
+            async init() {
                 if (!window.L) {
                     await new Promise((resolve, reject) => {
                         const s = document.createElement('script');
@@ -48,10 +46,10 @@
                         document.head.appendChild(s);
                     });
                 }
-                this.init();
+                this.setupMap();
             },
 
-            init() {
+            setupMap() {
                 const lat = parseFloat(this.$wire.get('data.map_lat')) || this.defaultLat;
                 const lng = parseFloat(this.$wire.get('data.map_lng')) || this.defaultLng;
 
@@ -62,8 +60,6 @@
                     maxZoom: 19,
                 }).addTo(this.map);
 
-                // Default Leaflet marker icons need URL injection because
-                // we're not bundling them through Vite here.
                 const icon = L.icon({
                     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
                     iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -85,8 +81,6 @@
                     this.commit(e.latlng.lat, e.latlng.lng);
                 });
 
-                // Leaflet auto-sizes on mount but Filament tabs sometimes
-                // mount the field hidden — re-trigger after layout settles.
                 setTimeout(() => this.map.invalidateSize(), 100);
             },
 
@@ -102,9 +96,6 @@
             }
         };
 
-        // Alpine may have already started (Filament boots it eagerly) —
-        // register immediately in that case, AND on alpine:init for the
-        // race where this script runs before Alpine.
         register();
         document.addEventListener('alpine:init', register);
     })();

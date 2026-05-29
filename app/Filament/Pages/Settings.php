@@ -101,8 +101,11 @@ class Settings extends Page implements HasForms
                                     TextInput::make('address')
                                         ->label('Адрес офиса')
                                         ->columnSpanFull(),
-                                    TextInput::make('working_hours')->label('Время работы'),
-                                    TextInput::make('skype')->label('Skype'),
+                                    Textarea::make('working_hours')
+                                        ->label('Время работы')
+                                        ->rows(3)
+                                        ->columnSpanFull()
+                                        ->helperText('Например: Пн-Пт 9:00-18:00; Сб 10:00-15:00; Вс выходной.'),
                                     View::make('filament.forms.leaflet-map-picker')
                                         ->columnSpanFull(),
                                     TextInput::make('map_lat')
