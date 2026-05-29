@@ -126,30 +126,18 @@ class ProductForm
                 ]),
 
             Section::make('Изображения')
-                ->description('Чертёж — схематичное изображение с размерами. Реальное фото — фотография самого изделия. Оба показываются на странице товара с переключателем.')
-                ->columns(2)
+                ->description('Загрузите фото и чертежи. Перетащите за уголок чтобы поменять порядок. Первое фото показывается на карточке товара и в OG-превью. При загрузке можно обрезать (1:1).')
                 ->schema([
-                    SpatieMediaLibraryFileUpload::make('image_blueprint')
-                        ->label('Чертёж (схема с размерами)')
-                        ->collection('blueprint')
-                        ->image()
-                        ->imageEditor()
-                        ->helperText('1 файл, оптимально 1200×1200'),
-
-                    SpatieMediaLibraryFileUpload::make('image_real')
-                        ->label('Реальное фото изделия')
-                        ->collection('real')
-                        ->image()
-                        ->imageEditor()
-                        ->helperText('1 файл, оптимально 1200×1200'),
-
-                    SpatieMediaLibraryFileUpload::make('gallery')
-                        ->label('Доп. фотографии (галерея)')
-                        ->collection('gallery')
+                    SpatieMediaLibraryFileUpload::make('images')
+                        ->collection('images')
                         ->multiple()
                         ->reorderable()
+                        ->appendFiles()
                         ->image()
                         ->imageEditor()
+                        ->imageEditorAspectRatios(['1:1'])
+                        ->imageEditorMode(2)
+                        ->panelLayout('grid')
                         ->columnSpanFull(),
                 ]),
 

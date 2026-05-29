@@ -1,7 +1,12 @@
 @php
-    $imageReal = $product->getFirstMediaUrl('real', 'og');
-    $imageBlueprint = $product->getFirstMediaUrl('blueprint', 'og');
-    $images = array_values(array_filter([$imageReal, $imageBlueprint]));
+    // All product images in admin-defined order — Google Rich Results
+    // is happy with a single-URL string or array; we give it the array
+    // for richer carousels in SERP.
+    $images = $product->getMedia('images')
+        ->map(fn ($m) => $m->getUrl('og'))
+        ->filter()
+        ->values()
+        ->all();
 
     $data = array_filter([
         '@context' => 'https://schema.org',

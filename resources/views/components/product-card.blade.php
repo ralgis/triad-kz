@@ -12,9 +12,7 @@
         ? route('catalog.product', ['category' => $primaryCategory->slug, 'product' => $product->slug])
         : url('/catalog/'.$product->slug);
 
-    $image = $product->getFirstMediaUrl('real', 'card')
-        ?: $product->getFirstMediaUrl('blueprint', 'card')
-        ?: null;
+    $image = $product->getFirstMediaUrl('images', 'card') ?: null;
 @endphp
 
 <article class="group flex flex-col bg-white border border-slate-200 rounded-lg overflow-hidden hover:border-brand-400 hover:shadow-md transition">

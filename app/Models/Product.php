@@ -90,14 +90,11 @@ class Product extends Model implements HasMedia, HasPublicUrl
 
     public function registerMediaCollections(): void
     {
-        // Чертёж: схема с размерами. Single image.
-        $this->addMediaCollection('blueprint')->singleFile();
-
-        // Реальное фото изделия. Single image.
-        $this->addMediaCollection('real')->singleFile();
-
-        // Дополнительные фото для галереи (multiple).
-        $this->addMediaCollection('gallery');
+        // Unified image collection — was split into blueprint / real /
+        // gallery before; merged 2026-05-29 because the legacy split
+        // didn't match how clients actually mix photos and schematics.
+        // Order in Filament drag-handle = display order in catalog.
+        $this->addMediaCollection('images');
     }
 
     public function registerMediaConversions(?Media $media = null): void

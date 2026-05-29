@@ -3,8 +3,7 @@
     'meta_description' => $product->meta_description
         ?: \Illuminate\Support\Str::limit(strip_tags($product->description ?? ''), 160)
         ?: 'Купить '.$product->name.' по ГОСТ. Доставка по Казахстану.',
-    'og_image' => $product->getFirstMediaUrl('real', 'og')
-        ?: $product->getFirstMediaUrl('blueprint', 'og') ?: null,
+    'og_image' => $product->getFirstMediaUrl('images', 'og') ?: null,
     'og_type' => 'product',
     'schema_jsonld' => view('partials.schema.product', compact('product', 'category'))->render(),
 ])
@@ -12,13 +11,14 @@
 @php
     use Illuminate\Support\Number;
 
-    $blueprint = $product->getFirstMediaUrl('blueprint', 'card');
-    $real = $product->getFirstMediaUrl('real', 'card');
-    $blueprintFull = $product->getFirstMediaUrl('blueprint');
-    $realFull = $product->getFirstMediaUrl('real');
-    $hasBoth = $blueprint && $real;
-    // Real photo is the catalog default; blueprint is the technical view.
-    $defaultTab = $real ? 'real' : 'blueprint';
+    // Unified 'images' collection — admin drag-orders, first one is
+    // primary (used in product-card grids + OG meta). Map to a simple
+    // [card, full] tuple per slide.
+    $images = $product->getMedia('images')->map(fn ($m) => [
+        'card' => $m->getUrl('card'),
+        'full' => $m->getUrl(),
+        'alt' => $product->name,
+    ])->all();
 @endphp
 
 @section('content')
@@ -31,53 +31,55 @@
 
         <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
 
-            {{-- Gallery — tabs «Чертёж / Фото» when both are present. --}}
-            <div x-data="{ tab: '{{ $defaultTab }}' }">
-                @if($hasBoth)
-                    <div class="flex gap-2 mb-3" role="tablist">
-                        <button @click="tab = 'real'"
-                                :class="tab === 'real' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
-                                class="px-4 py-2 text-sm font-medium rounded transition"
-                                role="tab"
-                                :aria-selected="tab === 'real'">
-                            Фото изделия
-                        </button>
-                        <button @click="tab = 'blueprint'"
-                                :class="tab === 'blueprint' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
-                                class="px-4 py-2 text-sm font-medium rounded transition"
-                                role="tab"
-                                :aria-selected="tab === 'blueprint'">
-                            Чертёж
-                        </button>
+            {{-- Gallery — Swiper carousel with thumbnail strip. Falls
+                 back to a "no photo yet" placeholder when empty. --}}
+            <div>
+                @if(count($images) === 0)
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg overflow-hidden aspect-square flex items-center justify-center text-slate-400">
+                        Фото скоро появится
+                    </div>
+                @else
+                    <div x-data="productGallery({{ Js::from($images) }})" x-init="init()">
+                        {{-- Main image swiper --}}
+                        <div class="bg-slate-50 border border-slate-200 rounded-lg overflow-hidden aspect-square">
+                            <div class="swiper product-main-swiper h-full" x-ref="main">
+                                <div class="swiper-wrapper">
+                                    @foreach($images as $img)
+                                        <div class="swiper-slide">
+                                            <a href="{{ $img['full'] }}" target="_blank" rel="noopener"
+                                               class="block w-full h-full">
+                                                <img src="{{ $img['card'] }}"
+                                                     alt="{{ $img['alt'] }}"
+                                                     class="w-full h-full object-contain"
+                                                     loading="lazy">
+                                            </a>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                @if(count($images) > 1)
+                                    <div class="swiper-button-prev !text-slate-700"></div>
+                                    <div class="swiper-button-next !text-slate-700"></div>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Thumbnail strip — only when >1 image --}}
+                        @if(count($images) > 1)
+                            <div class="swiper product-thumbs-swiper mt-3" x-ref="thumbs">
+                                <div class="swiper-wrapper">
+                                    @foreach($images as $img)
+                                        <div class="swiper-slide !w-20 !h-20 cursor-pointer rounded border-2 border-transparent overflow-hidden">
+                                            <img src="{{ $img['card'] }}"
+                                                 alt=""
+                                                 class="w-full h-full object-cover"
+                                                 loading="lazy">
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 @endif
-
-                <div class="bg-slate-50 border border-slate-200 rounded-lg overflow-hidden aspect-square">
-                    @if($real)
-                        <a href="{{ $realFull }}" target="_blank" rel="noopener"
-                           x-show="tab === 'real'"
-                           class="block w-full h-full">
-                            <img src="{{ $real }}"
-                                 alt="{{ $product->name }} — фото"
-                                 class="w-full h-full object-contain">
-                        </a>
-                    @endif
-                    @if($blueprint)
-                        <a href="{{ $blueprintFull }}" target="_blank" rel="noopener"
-                           x-show="tab === 'blueprint'"
-                           @if(! $real) x-cloak @else style="display: none;" @endif
-                           class="block w-full h-full">
-                            <img src="{{ $blueprint }}"
-                                 alt="{{ $product->name }} — чертёж"
-                                 class="w-full h-full object-contain">
-                        </a>
-                    @endif
-                    @if(! $blueprint && ! $real)
-                        <div class="w-full h-full flex items-center justify-center text-slate-400">
-                            Фото скоро появится
-                        </div>
-                    @endif
-                </div>
             </div>
 
             {{-- Specs + price + CTAs. --}}

@@ -234,19 +234,25 @@ final class ImportTriadContent extends Command
                 $product->categories()->sync($atCatIds);
             }
 
-            // In this legacy dataset, _thumbnail_id is the BLUEPRINT
-            // (schematic / чертёж with dimensions) and gallery items are
-            // the actual product photos. Confirmed by the client. The
-            // mapping below reflects that:
-            //   _thumbnail_id           → blueprint  (singleFile)
-            //   gallery[0]              → real       (singleFile, primary photo)
-            //   gallery[1..n]           → gallery    (multi)
-            if ($zip !== null && $r->thumb_id) {
-                $this->attachAttachmentToModel($product, 'blueprint', (int) $r->thumb_id, $zip);
-            }
+            // All product images go into a single 'images' collection
+            // (drag-orderable in Filament). Display order during seed:
+            //   blueprint (_thumbnail_id) → real (gallery[0]) → gallery[1..]
+            // Admin can drag-reorder after the fact to put the best
+            // photo first. Clears+rebuilds for idempotent re-runs.
+            if ($zip !== null) {
+                $product->clearMediaCollection('images');
 
-            if ($zip !== null && $r->gallery_ids) {
-                $this->attachGallery($product, (string) $r->gallery_ids, $zip);
+                $sources = [];
+                if ($r->thumb_id) {
+                    $sources[] = (int) $r->thumb_id;
+                }
+                if ($r->gallery_ids) {
+                    foreach (explode(',', (string) $r->gallery_ids) as $gid) {
+                        $sources[] = (int) $gid;
+                    }
+                }
+
+                $this->attachAttachmentsAsImages($product, array_values(array_filter($sources)), $zip);
             }
 
             $bar->advance();
@@ -351,31 +357,25 @@ final class ImportTriadContent extends Command
     }
 
     /**
-     * Split the WC gallery: first item is the primary product photo
-     * (singleFile 'real' collection), remainder are additional angle
-     * shots (multi 'gallery' collection). Mirrors the catalog UI which
-     * shows one main «Фото изделия» tab and a separate gallery strip.
+     * Bulk-add WP attachment IDs into Product's unified 'images'
+     * collection, preserving the input order so the first ID becomes
+     * the primary (catalog card) image.
+     *
+     * @param array<int> $attachmentIds
      */
-    private function attachGallery(Product $product, string $idsCsv, ZipArchive $zip): void
+    private function attachAttachmentsAsImages(Product $product, array $attachmentIds, ZipArchive $zip): void
     {
-        $ids = array_values(array_filter(array_map('intval', explode(',', $idsCsv))));
-        if (! $ids) {
+        if (! $attachmentIds) {
             return;
         }
 
         $paths = DB::connection('wp_legacy')
             ->table('postmeta')
-            ->whereIn('post_id', $ids)
+            ->whereIn('post_id', $attachmentIds)
             ->where('meta_key', '_wp_attached_file')
             ->pluck('meta_value', 'post_id');
 
-        // Wipe both target collections and rebuild — both involve >1
-        // WP attachment_id and idempotency by file_name gets messy
-        // with reorder.
-        $product->clearMediaCollection('real');
-        $product->clearMediaCollection('gallery');
-
-        foreach ($ids as $i => $attId) {
+        foreach ($attachmentIds as $attId) {
             $relPath = $paths[$attId] ?? null;
             if (! $relPath) {
                 continue;
@@ -387,14 +387,14 @@ final class ImportTriadContent extends Command
                 continue;
             }
 
-            $tmp = tempnam(sys_get_temp_dir(), 'triad-gal-');
+            $tmp = tempnam(sys_get_temp_dir(), 'triad-img-');
             file_put_contents($tmp, stream_get_contents($stream));
             fclose($stream);
 
             $product->addMedia($tmp)
                 ->preservingOriginal(false)
                 ->usingFileName(basename($entry))
-                ->toMediaCollection($i === 0 ? 'real' : 'gallery');
+                ->toMediaCollection('images');
         }
     }
 
