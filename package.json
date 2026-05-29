@@ -15,6 +15,7 @@
         "vite": "^8.0.0"
     },
     "dependencies": {
+        "leaflet": "^1.9.4",
         "swiper": "^12.2.0"
     }
 }

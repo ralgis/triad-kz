@@ -66,6 +66,16 @@
                         </dl>
                     </div>
                 @endif
+
+                @if($settings->map_lat && $settings->map_lng)
+                    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+                        <div x-data="contactsMap({ lat: {{ $settings->map_lat }}, lng: {{ $settings->map_lng }}, label: @js($settings->address ?? '') })"
+                             x-init="init()"
+                             wire:ignore>
+                            <div x-ref="map" class="h-72 w-full bg-slate-100"></div>
+                        </div>
+                    </div>
+                @endif
             </div>
 
             <div class="bg-white border border-slate-200 rounded-lg p-6">

@@ -4,6 +4,7 @@
 import Alpine from 'alpinejs';
 import Swiper from 'swiper';
 import { Navigation, Thumbs } from 'swiper/modules';
+import L from 'leaflet';
 
 // productGallery — wired to the Swiper instance pair on
 // catalog/product.blade.php. Defined as an Alpine component so
@@ -62,6 +63,37 @@ Alpine.data('productGallery', (images) => ({
 
     prevLightbox() {
         this.lightboxIndex = (this.lightboxIndex - 1 + this.images.length) % this.images.length;
+    },
+}));
+
+// Read-only map on /contacts — marker at office coords with a popup
+// showing the address. Tile-stack: OpenStreetMap (no key, no quota).
+Alpine.data('contactsMap', ({ lat, lng, label }) => ({
+    init() {
+        const map = L.map(this.$refs.map, {
+            scrollWheelZoom: false,
+            zoomControl: true,
+        }).setView([lat, lng], 16);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Default Leaflet marker icons live in node_modules/leaflet/dist/images
+        // and don't bundle through Vite by default. Inline a remote URL so
+        // the marker always shows up.
+        const icon = L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+        });
+
+        const marker = L.marker([lat, lng], { icon }).addTo(map);
+        if (label) marker.bindPopup(label).openPopup();
     },
 }));
 

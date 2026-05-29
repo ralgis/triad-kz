@@ -15,6 +15,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 
@@ -102,8 +103,16 @@ class Settings extends Page implements HasForms
                                         ->columnSpanFull(),
                                     TextInput::make('working_hours')->label('Время работы'),
                                     TextInput::make('skype')->label('Skype'),
-                                    TextInput::make('map_lat')->label('Широта (для карты)')->numeric(),
-                                    TextInput::make('map_lng')->label('Долгота (для карты)')->numeric(),
+                                    View::make('filament.forms.leaflet-map-picker')
+                                        ->columnSpanFull(),
+                                    TextInput::make('map_lat')
+                                        ->label('Широта (lat)')
+                                        ->numeric()
+                                        ->step('0.000001'),
+                                    TextInput::make('map_lng')
+                                        ->label('Долгота (lng)')
+                                        ->numeric()
+                                        ->step('0.000001'),
                                 ]),
                             ]),
 
