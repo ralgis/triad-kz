@@ -124,7 +124,7 @@ class ProductForm
                 ]),
 
             Section::make('Цена')
-                ->description('Если цена скрыта — на сайте показывается кнопка «Запросить цену».')
+                ->description('Если цена скрыта — на сайте показывается кнопка «Запросить цену». Значения цены сохраняются даже когда скрыты, чтобы их можно было быстро вернуть.')
                 ->columns(3)
                 ->schema([
                     Toggle::make('price_visible')
@@ -133,21 +133,27 @@ class ProductForm
                         ->live()
                         ->columnSpanFull(),
 
+                    // When price_visible=false the three fields stay
+                    // editable in DB terms (saved on submit) but get
+                    // a disabled-look so the admin sees they don't
+                    // affect the public page. Cheaper to grey out than
+                    // hide-and-lose-context.
                     TextInput::make('price')
                         ->label('Цена, ₸')
                         ->numeric()
                         ->step(0.01)
                         ->minValue(0)
-                        ->visible(fn ($get) => $get('price_visible') === true),
+                        ->disabled(fn ($get) => $get('price_visible') !== true),
 
                     TextInput::make('price_unit')
                         ->label('Единица')
                         ->default('за шт')
-                        ->visible(fn ($get) => $get('price_visible') === true),
+                        ->disabled(fn ($get) => $get('price_visible') !== true),
 
                     TextInput::make('unit_for_order')
                         ->label('Единица в заказе')
-                        ->default('шт'),
+                        ->default('шт')
+                        ->disabled(fn ($get) => $get('price_visible') !== true),
                 ]),
 
             Section::make('Изображения')

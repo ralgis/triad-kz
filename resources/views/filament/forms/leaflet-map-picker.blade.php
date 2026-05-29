@@ -8,12 +8,19 @@
 
     Assets are loaded via CDN inside the field so we don't have to wire
     Leaflet into Filament's asset pipeline.
+
+    Styles are INLINE rather than Tailwind utility classes because this
+    blade renders inside the Filament admin panel, which uses its own
+    Tailwind build that doesn't include our public-site safelist —
+    `h-80`/`bg-slate-100`/etc resolve to nothing there and the map
+    container collapses to height 0 (Leaflet then never paints tiles).
 --}}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
-<div x-data="triadLeafletPicker" wire:ignore class="space-y-2">
-    <div x-ref="map" class="h-80 w-full rounded border border-slate-300 bg-slate-100"></div>
-    <p class="text-xs text-slate-500">
+<div x-data="triadLeafletPicker" wire:ignore>
+    <div x-ref="map"
+         style="height: 320px; width: 100%; border: 1px solid #cbd5e1; border-radius: 0.5rem; background: #f1f5f9; z-index: 1;"></div>
+    <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">
         Клик по карте ставит маркер. Координаты автоматически записываются в поля «Широта» и «Долгота» ниже.
         Маркер можно перетаскивать за иконку.
     </p>

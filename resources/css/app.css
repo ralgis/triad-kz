@@ -4,6 +4,15 @@
 @import 'swiper/css/thumbs';
 @import 'leaflet/dist/leaflet.css';
 
+/*
+ * Tailwind Typography (v4) — gives semantic `prose` styling to user-
+ * authored HTML coming out of the Filament RichEditor (about page,
+ * articles, ГОСТ descriptions, product descriptions). Without this
+ * plugin, `prose-slate` is a no-op and H2/H3/blockquote/lists render
+ * as plain inline text. v4 loads plugins via @plugin directive.
+ */
+@plugin '@tailwindcss/typography';
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
