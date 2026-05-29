@@ -37,10 +37,17 @@
                                 <dd class="mt-1"><a href="mailto:{{ $settings->public_email }}" class="text-brand-700 hover:text-brand-800">{{ $settings->public_email }}</a></dd>
                             </div>
                         @endif
-                        @if($settings->address)
+                        @if($settings->address || $settings->city)
                             <div>
                                 <dt class="text-sm text-slate-500">Адрес</dt>
-                                <dd class="mt-1 text-slate-800">{{ $settings->address }}</dd>
+                                <dd class="mt-1 text-slate-800 not-prose">
+                                    @if($settings->address)
+                                        <div>{{ $settings->address }}</div>
+                                    @endif
+                                    @if($settings->postal_code || $settings->city)
+                                        <div>{{ trim(($settings->postal_code ?? '').' '.($settings->city ?? '')) }}</div>
+                                    @endif
+                                </dd>
                             </div>
                         @endif
                         @php($scheduleLines = $settings->workingHoursLines())

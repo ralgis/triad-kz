@@ -60,6 +60,9 @@ class Setting extends Model implements HasMedia
         'public_email',
         'email_recipient',
         'address',
+        'city',
+        'postal_code',
+        'country_code',
         'working_hours',
         'special_days',
         'skype',
@@ -97,6 +100,30 @@ class Setting extends Model implements HasMedia
     {
         return self::firstOrCreate(['id' => 1], [
             'site_name' => 'ТРИ АД Construction',
+            'city' => 'Алматы',
+            'country_code' => 'KZ',
+        ]);
+    }
+
+    /**
+     * Schema.org PostalAddress as a plain array — used by both the
+     * Organization and LocalBusiness JSON-LD partials, so the
+     * structured-address shape is computed in one place.
+     *
+     * @return array<string, string>|null
+     */
+    public function postalAddress(): ?array
+    {
+        if (! $this->address && ! $this->city) {
+            return null;
+        }
+
+        return array_filter([
+            '@type' => 'PostalAddress',
+            'streetAddress' => $this->address ?: null,
+            'addressLocality' => $this->city ?: null,
+            'postalCode' => $this->postal_code ?: null,
+            'addressCountry' => $this->country_code ?: null,
         ]);
     }
 

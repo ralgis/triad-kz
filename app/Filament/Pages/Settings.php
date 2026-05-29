@@ -115,9 +115,31 @@ class Settings extends Page implements HasForms
                                         ->email()
                                         ->required()
                                         ->helperText('Сюда уходят все формы с сайта.'),
-                                    TextInput::make('address')
-                                        ->label('Адрес офиса')
-                                        ->columnSpanFull(),
+                                    Section::make('Адрес офиса')
+                                        ->description('Используется на странице контактов и в Schema.org PostalAddress (важно для local-SEO).')
+                                        ->columnSpanFull()
+                                        ->columns(4)
+                                        ->schema([
+                                            TextInput::make('address')
+                                                ->label('Улица, дом, корпус, офис')
+                                                ->columnSpan(4)
+                                                ->placeholder('ул. Бродского, 186'),
+                                            TextInput::make('postal_code')
+                                                ->label('Индекс')
+                                                ->placeholder('050000')
+                                                ->maxLength(20),
+                                            TextInput::make('city')
+                                                ->label('Город')
+                                                ->placeholder('Алматы')
+                                                ->maxLength(120)
+                                                ->columnSpan(2),
+                                            TextInput::make('country_code')
+                                                ->label('Страна (ISO-код)')
+                                                ->disabled()
+                                                ->dehydrated()
+                                                ->default('KZ')
+                                                ->helperText('Защищено от случайной правки. Меняется в коде формы при необходимости.'),
+                                        ]),
                                     Section::make('Время работы')
                                         ->description('Расписание по дням недели. Выключи переключатель если день — выходной.')
                                         ->columnSpanFull()

@@ -32,12 +32,7 @@
             'logo' => $settings->getFirstMediaUrl('logo') ?: null,
             'telephone' => $settings->phone ?: null,
             'email' => $settings->public_email ?: null,
-            'address' => $settings->company_legal_address ? [
-                '@type' => 'PostalAddress',
-                'streetAddress' => $settings->company_legal_address,
-                'addressLocality' => 'Алматы',
-                'addressCountry' => 'KZ',
-            ] : null,
+            'address' => $settings->postalAddress(),
             'identifier' => $settings->company_bin ? [
                 '@type' => 'PropertyValue',
                 'propertyID' => 'БИН',
