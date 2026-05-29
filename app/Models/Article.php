@@ -75,6 +75,21 @@ class Article extends Model implements HasMedia, HasPublicUrl
         return url('/blog/'.$this->slug);
     }
 
+    /**
+     * SEO alt for the article cover. Article images are usually
+     * illustrative not commercial, so we don't tack on city/brand —
+     * the title alone is the right keyword target.
+     */
+    public function imageAlt(): string
+    {
+        return $this->title;
+    }
+
+    public function imageTitle(): string
+    {
+        return $this->title;
+    }
+
     // ---- Scopes ----
 
     /**

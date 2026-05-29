@@ -137,6 +137,96 @@ class Product extends Model implements HasMedia, HasPublicUrl
     }
 
     /**
+     * Compact dimensional label for SEO alt text and product listings:
+     * «2380×400×580 мм» for linear shapes, «1000×890 мм» for кольца
+     * (inner_dia × height), «Ø1500 мм» for round plates, mesh-cell
+     * fallback for сетка-сварная.
+     *
+     * Returns null if the product has no geometry at all — used to
+     * skip the spec block in image alts gracefully.
+     */
+    public function geometryLabel(): ?string
+    {
+        $linear = array_values(array_filter([
+            $this->length_mm,
+            $this->width_mm,
+            $this->height_mm,
+        ]));
+        if (count($linear) >= 2) {
+            return implode('×', $linear).' мм';
+        }
+
+        if ($this->inner_diameter_mm && $this->height_mm) {
+            return $this->inner_diameter_mm.'×'.$this->height_mm.' мм';
+        }
+
+        if ($this->plate_diameter_mm) {
+            return 'Ø'.$this->plate_diameter_mm.' мм';
+        }
+
+        if ($this->outer_diameter_mm) {
+            return 'Ø'.$this->outer_diameter_mm.' мм';
+        }
+
+        // For сетка-сварная the cell label without context («100 мм»)
+        // reads as ambiguous in alt text; prefix «ячейка» so the
+        // descriptor is self-explanatory outside the spec table.
+        if ($cell = $this->meshCellLabel()) {
+            return 'ячейка '.$cell;
+        }
+
+        return null;
+    }
+
+    /**
+     * SEO-optimised alt text for a product image. Index 0 carries the
+     * full descriptor (name + geometry + ГОСТ + city) — that's the
+     * one Google reads when ranking image search. Index ≥1 gets a
+     * short numbered variant so secondary images stay unique without
+     * repeating the same keyword block on every gallery slide
+     * (which would read as keyword-stuffing).
+     */
+    public function imageAlt(int $index = 0): string
+    {
+        if ($index > 0) {
+            return $this->name.' — фото '.($index + 1);
+        }
+
+        $head = $this->name;
+        if ($geom = $this->geometryLabel()) {
+            $head .= ' '.$geom;
+        }
+
+        $gost = $this->relationLoaded('gosts')
+            ? $this->gosts->first()
+            : $this->gosts()->first();
+
+        $parts = [$head];
+        if ($gost instanceof Gost) {
+            $parts[] = $gost->fullLabel();
+        }
+        $parts[] = 'завод ТРИ АД, Алматы';
+
+        return implode(' — ', $parts);
+    }
+
+    /**
+     * Hover tooltip — short by design. Browsers cut long titles, and
+     * screen readers may double-announce when title duplicates alt,
+     * so we keep this to the SKU/name + ГОСТ stub.
+     */
+    public function imageTitle(): string
+    {
+        $gost = $this->relationLoaded('gosts')
+            ? $this->gosts->first()
+            : $this->gosts()->first();
+
+        return $gost instanceof Gost
+            ? $this->name.' — '.$gost->fullLabel()
+            : $this->name;
+    }
+
+    /**
      * «100×100» / «50×100» when both cell dimensions are present, just
      * the side-length when they're equal-or-only-one-set, or null.
      * Pulled out so specRows() stays a flat (key,label,value,unit)

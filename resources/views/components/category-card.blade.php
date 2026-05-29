@@ -10,7 +10,8 @@
     <div class="aspect-[4/3] bg-slate-50">
         @if($image)
             <img src="{{ $image }}"
-                 alt="{{ $category->name }}"
+                 alt="{{ $category->imageAlt() }}"
+                 title="{{ $category->imageTitle() }}"
                  loading="lazy"
                  class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
         @else

@@ -19,7 +19,8 @@
     <a href="{{ $url }}" class="block aspect-square bg-slate-50 overflow-hidden">
         @if($image)
             <img src="{{ $image }}"
-                 alt="{{ $product->name }}"
+                 alt="{{ $product->imageAlt(0) }}"
+                 title="{{ $product->imageTitle() }}"
                  loading="lazy"
                  class="w-full h-full object-contain group-hover:scale-105 transition duration-300">
         @else

@@ -95,6 +95,24 @@ class Category extends Model implements HasMedia, HasPublicUrl
     }
 
     /**
+     * SEO alt for the category cover image. Includes «в Алматы» for
+     * local pack relevance — categories are the second-most-linked
+     * pages after the homepage, so their image alt carries weight.
+     */
+    public function imageAlt(): string
+    {
+        return $this->name.' в Алматы — каталог ЖБИ | завод ТРИ АД';
+    }
+
+    /**
+     * Hover tooltip — just the category name, no marketing tail.
+     */
+    public function imageTitle(): string
+    {
+        return $this->name;
+    }
+
+    /**
      * Tree-level URL: /catalog/{slug}.
      *
      * Trailing slash deliberately omitted — Laravel's url() helper strips

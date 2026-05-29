@@ -32,7 +32,10 @@
         @php($cover = $article->getFirstMediaUrl('cover', 'hero'))
         @if($cover)
             <figure class="mt-8 rounded-lg overflow-hidden bg-slate-50">
-                <img src="{{ $cover }}" alt="{{ $article->title }}" class="w-full h-auto">
+                <img src="{{ $cover }}"
+                     alt="{{ $article->imageAlt() }}"
+                     title="{{ $article->imageTitle() }}"
+                     class="w-full h-auto">
             </figure>
         @endif
 

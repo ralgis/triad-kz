@@ -12,12 +12,16 @@
     use Illuminate\Support\Number;
 
     // Unified 'images' collection — admin drag-orders, first one is
-    // primary (used in product-card grids + OG meta). Map to a simple
-    // [card, full] tuple per slide.
-    $images = $product->getMedia('images')->map(fn ($m) => [
+    // primary (used in product-card grids + OG meta). Per-index alt
+    // so Google Image search reads a unique descriptor on each slide
+    // without keyword-stuffing (image 0 = full SEO descriptor,
+    // image ≥1 = «{name} — фото N»). Title kept short (hover).
+    $imageTitle = $product->imageTitle();
+    $images = $product->getMedia('images')->values()->map(fn ($m, $i) => [
         'card' => $m->getUrl('card'),
         'full' => $m->getUrl(),
-        'alt' => $product->name,
+        'alt' => $product->imageAlt($i),
+        'title' => $imageTitle,
     ])->all();
 @endphp
 
@@ -55,6 +59,7 @@
                                                     class="block w-full h-full cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
                                                 <img src="{{ $img['card'] }}"
                                                      alt="{{ $img['alt'] }}"
+                                                     title="{{ $img['title'] }}"
                                                      class="w-full h-full object-contain"
                                                      loading="lazy">
                                             </button>
@@ -124,6 +129,7 @@
 
                             <img :src="images[lightboxIndex].full"
                                  :alt="images[lightboxIndex].alt"
+                                 :title="images[lightboxIndex].title"
                                  class="max-w-[95vw] max-h-[90vh] object-contain"
                                  @click.stop>
 
