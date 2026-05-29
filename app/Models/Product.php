@@ -99,17 +99,17 @@ class Product extends Model implements HasMedia, HasPublicUrl
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        // Catalog card thumb on mobile.
-        $this->addMediaConversion('thumb')->width(300)->height(300);
-
-        // Catalog card on tablet+desktop.
-        $this->addMediaConversion('card')->width(600)->height(600);
-
-        // OG image for social previews + Schema.org Product.image.
-        $this->addMediaConversion('og')->width(1200)->height(630);
-
-        // Responsive srcset on product detail page.
-        $this->addMediaConversion('mobile')->width(768);
+        // nonOptimized() — Spatie's default Image::optimize() reaches
+        // for OptimizerChainFactory::create() which spawns jpegoptim /
+        // pngquant via Symfony Process → needs proc_open. Plesk shared
+        // disables proc_open, so optimization throws and the conversion
+        // file never lands on disk. Disabling per conversion is the
+        // load-bearing fix; the config-level image_optimizers=[] only
+        // covers ONE of the two optimizer paths media-library walks.
+        $this->addMediaConversion('thumb')->width(300)->height(300)->nonOptimized();
+        $this->addMediaConversion('card')->width(600)->height(600)->nonOptimized();
+        $this->addMediaConversion('og')->width(1200)->height(630)->nonOptimized();
+        $this->addMediaConversion('mobile')->width(768)->nonOptimized();
     }
 
     /**

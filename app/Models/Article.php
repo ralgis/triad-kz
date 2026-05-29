@@ -63,10 +63,11 @@ class Article extends Model implements HasMedia, HasPublicUrl
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion('thumb')->width(300)->height(300);
-        $this->addMediaConversion('card')->width(600)->height(400);
-        $this->addMediaConversion('og')->width(1200)->height(630);
-        $this->addMediaConversion('hero')->width(1600);
+        // nonOptimized() — see Product::registerMediaConversions() for context.
+        $this->addMediaConversion('thumb')->width(300)->height(300)->nonOptimized();
+        $this->addMediaConversion('card')->width(600)->height(400)->nonOptimized();
+        $this->addMediaConversion('og')->width(1200)->height(630)->nonOptimized();
+        $this->addMediaConversion('hero')->width(1600)->nonOptimized();
     }
 
     public function url(): string

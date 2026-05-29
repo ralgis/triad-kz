@@ -83,9 +83,10 @@ class Category extends Model implements HasMedia, HasPublicUrl
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion('thumb')->width(300)->height(300);
-        $this->addMediaConversion('card')->width(600)->height(600);
-        $this->addMediaConversion('og')->width(1200)->height(630);
+        // nonOptimized() — see Product::registerMediaConversions() for context.
+        $this->addMediaConversion('thumb')->width(300)->height(300)->nonOptimized();
+        $this->addMediaConversion('card')->width(600)->height(600)->nonOptimized();
+        $this->addMediaConversion('og')->width(1200)->height(630)->nonOptimized();
     }
 
     /**

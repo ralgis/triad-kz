@@ -79,7 +79,8 @@ class Setting extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion('header')->width(200)->height(80);
-        $this->addMediaConversion('invoice')->width(400)->height(160);
+        // nonOptimized() — see Product::registerMediaConversions() for context.
+        $this->addMediaConversion('header')->width(200)->height(80)->nonOptimized();
+        $this->addMediaConversion('invoice')->width(400)->height(160)->nonOptimized();
     }
 }
