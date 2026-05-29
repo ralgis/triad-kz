@@ -7,7 +7,6 @@ namespace App\Filament\Resources\Products\Schemas;
 use App\Filament\Components\SeoSection;
 use App\Models\Gost;
 use App\Models\Product;
-use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -98,30 +97,126 @@ class ProductForm
                         ->columnSpanFull(),
                 ]),
 
-            Section::make('Размеры и характеристики')
-                ->description('Параметры изделия. Используются для фильтрации в каталоге и в Schema.org-разметке.')
-                ->columns(2)
+            Section::make('Геометрия')
+                ->description('Размеры изделия в миллиметрах. Заполняются те поля, которые применимы к этой категории — остальные оставь пустыми.')
+                ->columns(4)
                 ->schema([
-                    KeyValue::make('dimensions')
-                        ->label('Габариты (ключ-значение)')
-                        ->keyLabel('Параметр')
-                        ->valueLabel('Значение')
-                        ->keyPlaceholder('diameter')
-                        ->valuePlaceholder('1500')
-                        ->reorderable()
-                        ->addActionLabel('+ параметр')
-                        ->helperText('Например: diameter=1500, height=900, wall=90. Единицы измерения — мм.')
-                        ->columnSpanFull(),
+                    TextInput::make('length_mm')
+                        ->label('Длина, мм')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(1),
+
+                    TextInput::make('width_mm')
+                        ->label('Ширина, мм')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(1),
+
+                    TextInput::make('height_mm')
+                        ->label('Высота, мм')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(1),
+
+                    TextInput::make('thickness_mm')
+                        ->label('Толщина, мм')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(1),
+
+                    TextInput::make('inner_diameter_mm')
+                        ->label('Внутр. диаметр, мм')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(1)
+                        ->helperText('Для колец'),
+
+                    TextInput::make('outer_diameter_mm')
+                        ->label('Внеш. диаметр, мм')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(1)
+                        ->helperText('Для колец'),
+
+                    TextInput::make('plate_diameter_mm')
+                        ->label('Диаметр плиты, мм')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(1)
+                        ->helperText('Для плит'),
+
+                    TextInput::make('hole_diameter_mm')
+                        ->label('Диаметр отверстия, мм')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(1)
+                        ->helperText('Для плит перекрытия'),
+                ]),
+
+            Section::make('Материал и наличие')
+                ->columns(4)
+                ->schema([
+                    Select::make('concrete_grade')
+                        ->label('Марка бетона')
+                        ->options([
+                            'M200' => 'M200',
+                            'M300' => 'M300',
+                            'M350' => 'M350',
+                            'M400' => 'M400',
+                        ])
+                        ->searchable()
+                        ->native(false)
+                        ->placeholder('—'),
+
+                    TextInput::make('concrete_volume_m3')
+                        ->label('Объём бетона, м³')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(0.001),
 
                     TextInput::make('weight_kg')
                         ->label('Вес, кг')
                         ->numeric()
+                        ->minValue(0)
                         ->step(0.01)
-                        ->minValue(0),
+                        ->helperText('Если legacy данные были в тоннах — конвертируется при импорте.'),
+
+                    TextInput::make('steel_kg')
+                        ->label('Расход стали, кг')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(0.01),
 
                     Toggle::make('in_stock')
                         ->label('В наличии')
-                        ->default(true),
+                        ->default(true)
+                        ->columnSpanFull(),
+                ]),
+
+            Section::make('Параметры сетки сварной')
+                ->description('Заполняются только для товаров категории «Сетка сварная».')
+                ->columns(3)
+                ->collapsed()
+                ->schema([
+                    TextInput::make('mesh_rod_diameter_mm')
+                        ->label('Диаметр прутка, мм')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(1),
+
+                    TextInput::make('mesh_cell_length_mm')
+                        ->label('Длина ячейки, мм')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(1)
+                        ->helperText('Для квадратных ячеек оставь ширину пустой.'),
+
+                    TextInput::make('mesh_cell_width_mm')
+                        ->label('Ширина ячейки, мм')
+                        ->numeric()
+                        ->minValue(0)
+                        ->step(1),
                 ]),
 
             Section::make('Цена')

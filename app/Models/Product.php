@@ -33,8 +33,26 @@ class Product extends Model implements HasMedia, HasPublicUrl
         'slug',
         'sku',
         'gost',
-        'dimensions',
+        // Geometry — мм
+        'length_mm',
+        'width_mm',
+        'height_mm',
+        'thickness_mm',
+        'inner_diameter_mm',
+        'outer_diameter_mm',
+        'plate_diameter_mm',
+        'hole_diameter_mm',
+        // Material
+        'concrete_grade',
+        'concrete_volume_m3',
+        'steel_kg',
         'weight_kg',
+        // Welded mesh (категория сетка-сварная)
+        'mesh_rod_diameter_mm',
+        'mesh_cell_length_mm',
+        'mesh_cell_width_mm',
+        // Legacy JSON (transitional — kept until prod re-extract is verified)
+        'dimensions',
         'price',
         'price_unit',
         'price_visible',
@@ -55,13 +73,90 @@ class Product extends Model implements HasMedia, HasPublicUrl
     {
         return array_merge([
             'dimensions' => 'array',
+            'length_mm' => 'integer',
+            'width_mm' => 'integer',
+            'height_mm' => 'integer',
+            'thickness_mm' => 'integer',
+            'inner_diameter_mm' => 'integer',
+            'outer_diameter_mm' => 'integer',
+            'plate_diameter_mm' => 'integer',
+            'hole_diameter_mm' => 'integer',
+            'concrete_volume_m3' => 'decimal:3',
+            'steel_kg' => 'decimal:2',
             'weight_kg' => 'decimal:2',
+            'mesh_rod_diameter_mm' => 'integer',
+            'mesh_cell_length_mm' => 'integer',
+            'mesh_cell_width_mm' => 'integer',
             'price' => 'decimal:2',
             'price_visible' => 'boolean',
             'published' => 'boolean',
             'featured' => 'boolean',
             'in_stock' => 'boolean',
         ], $this->seoCasts());
+    }
+
+    /**
+     * Effective product specs as a (label, value, unit) list, in the
+     * display order shown on the catalog detail page. Empty values are
+     * filtered out so each product only renders its applicable rows.
+     *
+     * Used by both the product detail Blade and the Schema.org
+     * additionalProperty block so the two stay in lockstep — no
+     * duplicate "what to show" logic in two places.
+     *
+     * @return array<int, array{key: string, label: string, value: int|float|string, unit: string}>
+     */
+    public function specRows(): array
+    {
+        $rows = [
+            ['length_mm', 'Длина', $this->length_mm, 'мм'],
+            ['width_mm', 'Ширина', $this->width_mm, 'мм'],
+            ['height_mm', 'Высота', $this->height_mm, 'мм'],
+            ['thickness_mm', 'Толщина', $this->thickness_mm, 'мм'],
+            ['inner_diameter_mm', 'Внутренний диаметр', $this->inner_diameter_mm, 'мм'],
+            ['outer_diameter_mm', 'Внешний диаметр', $this->outer_diameter_mm, 'мм'],
+            ['plate_diameter_mm', 'Диаметр плиты', $this->plate_diameter_mm, 'мм'],
+            ['hole_diameter_mm', 'Диаметр отверстия', $this->hole_diameter_mm, 'мм'],
+            ['concrete_volume_m3', 'Объём бетона', $this->concrete_volume_m3, 'м³'],
+            ['concrete_grade', 'Марка бетона', $this->concrete_grade, ''],
+            ['weight_kg', 'Вес', $this->weight_kg, 'кг'],
+            ['steel_kg', 'Расход стали', $this->steel_kg, 'кг'],
+            // Welded mesh — only one or two will be non-null and only
+            // for the сетка-сварная category, so they sort to the
+            // bottom of the catch-all spec block.
+            ['mesh_rod_diameter_mm', 'Диаметр прутка', $this->mesh_rod_diameter_mm, 'мм'],
+            ['mesh_cell', 'Размер ячейки', $this->meshCellLabel(), ''],
+        ];
+
+        return array_values(array_filter(array_map(
+            fn ($r) => ($r[2] !== null && $r[2] !== '' && $r[2] !== 0 && $r[2] !== '0')
+                ? ['key' => $r[0], 'label' => $r[1], 'value' => $r[2], 'unit' => $r[3]]
+                : null,
+            $rows,
+        )));
+    }
+
+    /**
+     * «100×100» / «50×100» when both cell dimensions are present, just
+     * the side-length when they're equal-or-only-one-set, or null.
+     * Pulled out so specRows() stays a flat (key,label,value,unit)
+     * list — mesh size is the one row whose value isn't a single
+     * scalar.
+     */
+    public function meshCellLabel(): ?string
+    {
+        $l = $this->mesh_cell_length_mm;
+        $w = $this->mesh_cell_width_mm;
+
+        if (! $l && ! $w) {
+            return null;
+        }
+
+        if ($l && $w && $l !== $w) {
+            return $l.'×'.$w.' мм';
+        }
+
+        return ($l ?: $w).' мм';
     }
 
     public function getSlugOptions(): SlugOptions

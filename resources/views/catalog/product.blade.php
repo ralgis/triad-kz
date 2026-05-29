@@ -170,23 +170,17 @@
                 @endif
 
                 @php
-                    $dims = $product->dimensions ?? [];
-                    $weight = $product->weight_kg;
-                    $hasSpecs = ! empty($dims) || $weight;
+                    $specs = $product->specRows();
                 @endphp
 
-                @if($hasSpecs)
+                @if(! empty($specs))
                     <dl class="mt-6 grid grid-cols-2 gap-x-4 gap-y-2 text-sm border-t border-slate-200 pt-4">
-                        @foreach($dims as $key => $value)
-                            @if($value !== null && $value !== '')
-                                <dt class="text-slate-500">{{ \App\Support\DimensionLabels::label($key) }}</dt>
-                                <dd class="text-slate-900 font-medium">{{ $value }} мм</dd>
-                            @endif
+                        @foreach($specs as $row)
+                            <dt class="text-slate-500">{{ $row['label'] }}</dt>
+                            <dd class="text-slate-900 font-medium">
+                                {{ $row['value'] }}@if($row['unit']) {{ $row['unit'] }}@endif
+                            </dd>
                         @endforeach
-                        @if($weight)
-                            <dt class="text-slate-500">Вес</dt>
-                            <dd class="text-slate-900 font-medium">{{ $weight }} кг</dd>
-                        @endif
                     </dl>
                 @endif
 
