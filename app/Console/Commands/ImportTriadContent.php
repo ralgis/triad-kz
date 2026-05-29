@@ -8,9 +8,9 @@ use App\Models\Category;
 use App\Models\Gost;
 use App\Models\Page;
 use App\Models\Product;
+use App\Support\GostMatcher;
 use App\Support\Translit;
 use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use ZipArchive;
@@ -195,14 +195,15 @@ final class ImportTriadContent extends Command
             $slug = Translit::slug((string) $r->post_title);
             $bar->setMessage($r->post_title);
 
-            // Parse ГОСТ/Серия — these live inside post_content as a
-            // bullet «<li>ГОСТ/Серия — ГОСТ X / Серия Y</li>». We
-            // extract every standalone «ГОСТ NNNN-NN» / «Серия N.N.N-NN»
-            // token, then match each to the reference table by numeric
-            // code. Unmatched tokens are logged so the seeder can be
-            // expanded later.
-            $rawGostLine = $this->extractGostLine((string) $r->post_content);
-            $gostIds = $this->matchGostsForProduct($rawGostLine, $gostsByCode);
+            // Parse ГОСТ/Серия from the «<li>ГОСТ/Серия — X / Y</li>»
+            // bullet inside post_content. Numeric codes are matched
+            // against the seeded reference; unmatched lines warn but
+            // don't block the import.
+            $rawGostLine = GostMatcher::extractGostLine((string) $r->post_content);
+            $gostIds = GostMatcher::matchGostIds($rawGostLine, $gostsByCode);
+            if ($rawGostLine !== '' && empty($gostIds)) {
+                $this->warn("  ! unmatched ГОСТ/Серия line: {$rawGostLine}");
+            }
 
             // Legacy free-text ГОСТ column — kept until we drop it in a
             // follow-up migration. Carries the raw line for traceability
@@ -412,76 +413,6 @@ final class ImportTriadContent extends Command
                 ->usingFileName(basename($entry))
                 ->toMediaCollection('images');
         }
-    }
-
-    /**
-     * Pull the «ГОСТ/Серия — …» bullet from a product description.
-     * Returns the inner text (without the «ГОСТ/Серия —» label) or
-     * empty string if no such bullet is present.
-     */
-    private function extractGostLine(string $html): string
-    {
-        if (! preg_match('#<li>\s*ГОСТ/Серия\s*[-—]\s*([^<]+?)\s*\.?\s*</li>#u', $html, $m)) {
-            return '';
-        }
-
-        return trim($m[1]);
-    }
-
-    /**
-     * Match a free-text «ГОСТ X / Серия Y» line against the seeded
-     * reference table, returning the matched Gost row IDs.
-     *
-     * Strategy: extract every standalone numeric code token
-     * ('8020-90', '3.900.1-14', '3.006.1-2.87'), look each up by the
-     * `code` column. Matches that fall through (e.g. legacy text
-     * «Серия 3.006.1-2/82(87)» normalizes to '3.006.1-2.87') are
-     * passed through a small alias map below.
-     *
-     * @param  Collection<string, Gost>  $gostsByCode  keyed by `code`
-     * @return array<int>
-     */
-    private function matchGostsForProduct(string $rawLine, Collection $gostsByCode): array
-    {
-        if ($rawLine === '') {
-            return [];
-        }
-
-        // Legacy descriptions used several variants of the same series
-        // («3.006.1-2/82(87)», «3.006.1-2.87 Выпуск 2»). Map each to
-        // the canonical code in the seeded reference.
-        $aliases = [
-            '3.006.1-2/82(87)' => '3.006.1-2.87',
-            '3.006.1-2/82' => '3.006.1-2.87',
-        ];
-
-        $ids = [];
-
-        // Walk tokens that look like numeric standard codes:
-        // - 4-5 digits + dash + 2 digits  ('8020-90', '13579-78')
-        // - dotted code ending in /-NN     ('3.900.1-14', '3.006.1-2.87')
-        // - dotted code with /letters       ('3.006.1-2/82(87)')
-        if (! preg_match_all('#(\d+(?:\.\d+)*(?:[/-][\d().]+)*)#u', $rawLine, $matches)) {
-            return [];
-        }
-
-        foreach ($matches[1] as $token) {
-            $code = $aliases[$token] ?? $token;
-
-            // Heuristic: also try stripping trailing «Выпуск N» before
-            // matching. The seeded code is the bare series identifier.
-            $bare = preg_replace('#\s+Выпуск\s+\d+$#u', '', $code) ?? $code;
-
-            if ($gostsByCode->has($bare)) {
-                $ids[$gostsByCode[$bare]->id] = true;
-            }
-        }
-
-        if (empty($ids)) {
-            $this->warn("  ! unmatched ГОСТ/Серия line: {$rawLine}");
-        }
-
-        return array_keys($ids);
     }
 
     /**
