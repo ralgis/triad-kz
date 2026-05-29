@@ -49,13 +49,13 @@ class ProductForm
                         ->maxLength(64),
 
                     Select::make('gosts')
-                        ->label('ГОСТ / Серия')
+                        ->label('Стандарт')
                         ->relationship('gosts', 'label', fn ($query) => $query->orderBy('sort_order')->orderBy('label'))
                         ->getOptionLabelFromRecordUsing(fn (Gost $r) => $r->fullLabel())
                         ->multiple()
                         ->preload()
                         ->searchable()
-                        ->helperText('Выберите из справочника. Один товар может ссылаться и на ГОСТ, и на Серию.')
+                        ->helperText('Выберите из справочника. Один товар может ссылаться на несколько стандартов (например, ГОСТ + соответствующую Серию).')
                         ->createOptionForm([
                             Select::make('kind')
                                 ->label('Тип')

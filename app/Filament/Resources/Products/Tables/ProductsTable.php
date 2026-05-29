@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Products\Tables;
 
+use App\Models\Product;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -23,6 +24,7 @@ class ProductsTable
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->modifyQueryUsing(fn ($query) => $query->with('gosts'))
             ->columns([
                 SpatieMediaLibraryImageColumn::make('real')
                     ->collection('real')
@@ -42,10 +44,22 @@ class ProductsTable
                     ->searchable()
                     ->copyable(),
 
-                TextColumn::make('gost')
-                    ->label('ГОСТ')
-                    ->toggleable()
-                    ->placeholder('—'),
+                // Was reading the dropped `products.gost` text column —
+                // hence everywhere «—» on prod after migration 0200
+                // dropped it. Now pulls fullLabel() off the M2M
+                // `gosts` relation so the admin sees what the public
+                // pages render. «ГОСТ» renamed to «Стандарт» because
+                // the underlying type covers ГОСТ + Серия + СТ ТОО
+                // (and any future СТ РК / ТУ) — narrower label was
+                // misleading.
+                TextColumn::make('standards')
+                    ->label('Стандарт')
+                    ->badge()
+                    ->getStateUsing(fn (Product $record) => $record->gosts
+                        ->map(fn ($g) => $g->fullLabel())
+                        ->all())
+                    ->placeholder('—')
+                    ->toggleable(),
 
                 TextColumn::make('categories.name')
                     ->label('Категории')
