@@ -1,7 +1,9 @@
+@php($settings ??= \App\Models\Setting::current())
 @extends('layouts.app', [
-    'meta_title' => 'ТРИ АД Construction — ЖБИ в Алматы',
-    'meta_description' => 'Производство и продажа железобетонных изделий: '
-        .'бетонные кольца, плиты перекрытия, ФБС, опорные подушки. Доставка по Казахстану.',
+    'meta_title' => $settings->home_meta_title
+        ?: 'ТРИ АД Construction — ЖБИ в Алматы',
+    'meta_description' => $settings->home_meta_description
+        ?: 'Производство и продажа железобетонных изделий: бетонные кольца, плиты перекрытия, ФБС, опорные подушки. Доставка по Казахстану.',
 ])
 
 @section('content')

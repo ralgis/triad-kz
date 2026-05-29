@@ -84,6 +84,8 @@ class Setting extends Model implements HasMedia
         'analytics_yandex_id',
         'analytics_google_id',
         'analytics_enabled',
+        'home_meta_title',
+        'home_meta_description',
     ];
 
     protected function casts(): array

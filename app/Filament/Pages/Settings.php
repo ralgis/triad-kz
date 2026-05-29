@@ -287,6 +287,21 @@ class Settings extends Page implements HasForms
                                         ->dehydrateStateUsing(fn ($state) => blank($state)
                                             ? null
                                             : json_decode((string) $state, associative: true)),
+                                    TextInput::make('home_meta_title')
+                                        ->label('Title главной страницы (для SERP)')
+                                        ->maxLength(70)
+                                        ->columnSpanFull()
+                                        ->placeholder('Завод ЖБИ ТРИ АД Construction — Алматы | Кольца, ФБС, плиты')
+                                        ->helperText('Оптимально 50-60 символов. Google обрезает длиннее.'),
+
+                                    Textarea::make('home_meta_description')
+                                        ->label('Description главной страницы (для SERP-сниппета)')
+                                        ->maxLength(500)
+                                        ->rows(2)
+                                        ->columnSpanFull()
+                                        ->placeholder('Производство и продажа железобетонных изделий в Алматы…')
+                                        ->helperText('Оптимально 150-160 символов. Google показывает первые ~160.'),
+
                                     Toggle::make('analytics_enabled')
                                         ->label('Включить аналитику на сайте')
                                         ->default(false)
