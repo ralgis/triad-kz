@@ -39,20 +39,25 @@
                         Фото скоро появится
                     </div>
                 @else
-                    <div x-data="productGallery({{ Js::from($images) }})" x-init="init()">
+                    <div x-data="productGallery({{ Js::from($images) }})"
+                         x-init="init()"
+                         @keydown.escape.window="closeLightbox"
+                         @keydown.arrow-left.window="lightboxOpen && prevLightbox()"
+                         @keydown.arrow-right.window="lightboxOpen && nextLightbox()">
                         {{-- Main image swiper --}}
                         <div class="bg-slate-50 border border-slate-200 rounded-lg overflow-hidden aspect-square">
                             <div class="swiper product-main-swiper h-full" x-ref="main">
                                 <div class="swiper-wrapper">
-                                    @foreach($images as $img)
+                                    @foreach($images as $i => $img)
                                         <div class="swiper-slide">
-                                            <a href="{{ $img['full'] }}" target="_blank" rel="noopener"
-                                               class="block w-full h-full">
+                                            <button type="button"
+                                                    @click="openLightbox({{ $i }})"
+                                                    class="block w-full h-full cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
                                                 <img src="{{ $img['card'] }}"
                                                      alt="{{ $img['alt'] }}"
                                                      class="w-full h-full object-contain"
                                                      loading="lazy">
-                                            </a>
+                                            </button>
                                         </div>
                                     @endforeach
                                 </div>
@@ -78,6 +83,56 @@
                                 </div>
                             </div>
                         @endif
+
+                        {{-- Lightbox modal — same-tab fullscreen viewer. Click on
+                             backdrop or × closes; arrows + swipe navigate. --}}
+                        <div x-show="lightboxOpen"
+                             x-transition.opacity
+                             @click.self="closeLightbox"
+                             class="fixed inset-0 z-50 bg-slate-900/95 flex items-center justify-center p-4"
+                             style="display: none;"
+                             role="dialog"
+                             aria-modal="true">
+
+                            <button type="button"
+                                    @click="closeLightbox"
+                                    class="absolute top-4 right-4 size-10 flex items-center justify-center text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                    aria-label="Закрыть">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+
+                            @if(count($images) > 1)
+                                <button type="button"
+                                        @click.stop="prevLightbox"
+                                        class="absolute left-4 top-1/2 -translate-y-1/2 size-12 flex items-center justify-center text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                        aria-label="Предыдущая">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="size-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                                    </svg>
+                                </button>
+                                <button type="button"
+                                        @click.stop="nextLightbox"
+                                        class="absolute right-4 top-1/2 -translate-y-1/2 size-12 flex items-center justify-center text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                        aria-label="Следующая">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="size-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </button>
+                            @endif
+
+                            <img :src="images[lightboxIndex].full"
+                                 :alt="images[lightboxIndex].alt"
+                                 class="max-w-[95vw] max-h-[90vh] object-contain"
+                                 @click.stop>
+
+                            @if(count($images) > 1)
+                                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-sm bg-white/10 px-3 py-1 rounded-full">
+                                    <span x-text="lightboxIndex + 1"></span> / {{ count($images) }}
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 @endif
             </div>
