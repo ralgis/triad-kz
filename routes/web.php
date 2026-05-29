@@ -7,6 +7,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\GostController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
@@ -47,6 +48,11 @@ Route::get('/contacts', [ContactController::class, 'show'])->name('contacts.show
 Route::post('/contacts', [ContactController::class, 'store'])
     ->middleware('throttle:contact')
     ->name('contacts.store');
+
+// Standards reference («ГОСТы и Серии») — single-page accordion. Detail
+// links use #slug anchors; no /gosts/{slug} routes by design (avoids
+// fighting the {page:slug} catch-all and keeps SEO weight on one URL).
+Route::get('/gosts', [GostController::class, 'index'])->name('gosts.index');
 
 // Env-aware robots.txt — dev blocks all crawlers, prod allows + Sitemap.
 Route::get('/robots.txt', RobotsController::class);

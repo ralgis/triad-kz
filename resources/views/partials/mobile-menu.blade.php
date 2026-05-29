@@ -48,6 +48,7 @@
         <nav class="flex-1 overflow-y-auto px-4 py-4" aria-label="Мобильное меню">
             <ul class="space-y-1">
                 <li><a href="{{ url('/catalog') }}" class="block px-3 py-3 rounded text-slate-800 hover:bg-slate-50 font-medium">Каталог</a></li>
+                <li><a href="{{ url('/gosts') }}" class="block px-3 py-3 rounded text-slate-800 hover:bg-slate-50 font-medium">ГОСТы и Серии</a></li>
                 <li><a href="{{ url('/blog') }}" class="block px-3 py-3 rounded text-slate-800 hover:bg-slate-50 font-medium">Статьи</a></li>
                 <li><a href="{{ url('/about') }}" class="block px-3 py-3 rounded text-slate-800 hover:bg-slate-50 font-medium">О компании</a></li>
                 <li><a href="{{ url('/contacts') }}" class="block px-3 py-3 rounded text-slate-800 hover:bg-slate-50 font-medium">Контакты</a></li>

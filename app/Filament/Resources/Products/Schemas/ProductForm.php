@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Products\Schemas;
 
 use App\Filament\Components\SeoSection;
+use App\Models\Gost;
 use App\Models\Product;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\RichEditor;
@@ -48,11 +49,33 @@ class ProductForm
                         ->unique(Product::class, 'sku', ignoreRecord: true)
                         ->maxLength(64),
 
-                    TextInput::make('gost')
+                    Select::make('gosts')
                         ->label('ГОСТ / Серия')
-                        ->maxLength(120)
-                        ->placeholder('ГОСТ 8020-90')
-                        ->helperText('Технический стандарт. Важен для B2B-поиска.'),
+                        ->relationship('gosts', 'label', fn ($query) => $query->orderBy('sort_order')->orderBy('label'))
+                        ->multiple()
+                        ->preload()
+                        ->searchable()
+                        ->helperText('Выберите из справочника. Один товар может ссылаться и на ГОСТ, и на Серию.')
+                        ->createOptionForm([
+                            Select::make('kind')
+                                ->label('Тип')
+                                ->required()
+                                ->options([
+                                    Gost::KIND_GOST => 'ГОСТ',
+                                    Gost::KIND_SERIYA => 'Серия',
+                                ])
+                                ->default(Gost::KIND_GOST)
+                                ->native(false),
+                            TextInput::make('label')
+                                ->label('Название')
+                                ->required()
+                                ->maxLength(200)
+                                ->placeholder('ГОСТ 8020-90'),
+                            TextInput::make('code')
+                                ->label('Цифровой код (опц.)')
+                                ->maxLength(100)
+                                ->placeholder('8020-90'),
+                        ]),
 
                     Select::make('categories')
                         ->label('Категории')

@@ -78,6 +78,11 @@ class Product extends Model implements HasMedia, HasPublicUrl
         return $this->belongsToMany(Category::class);
     }
 
+    public function gosts(): BelongsToMany
+    {
+        return $this->belongsToMany(Gost::class);
+    }
+
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);

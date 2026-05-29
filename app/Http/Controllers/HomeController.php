@@ -29,7 +29,7 @@ final class HomeController extends Controller
         $products = Product::query()
             ->published()
             ->featured()
-            ->with('categories:id,slug')
+            ->with(['categories:id,slug', 'gosts'])
             ->limit(6)
             ->get();
 

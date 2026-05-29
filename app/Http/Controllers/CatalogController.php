@@ -42,6 +42,7 @@ final class CatalogController extends Controller
         // and stays in sync with Product::scopePublished.
         $products = $category->products()
             ->where('products.published', true)
+            ->with('gosts')
             ->orderBy('products.name')
             ->paginate(12)
             ->withQueryString();

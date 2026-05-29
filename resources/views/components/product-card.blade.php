@@ -30,7 +30,18 @@
     </a>
 
     <div class="p-4 flex flex-col flex-1">
-        @if($product->gost)
+        @php
+            // First gost wins for the card top-line — cards are tight
+            // on vertical space, so a single label keeps the visual
+            // hierarchy clean. Detail page shows all labels with links.
+            $firstGost = $product->relationLoaded('gosts')
+                ? $product->gosts->first()
+                : ($product->gosts()->first());
+        @endphp
+
+        @if($firstGost)
+            <p class="text-xs text-slate-500 uppercase tracking-wide mb-1">{{ $firstGost->label }}</p>
+        @elseif($product->gost)
             <p class="text-xs text-slate-500 uppercase tracking-wide mb-1">{{ $product->gost }}</p>
         @endif
 

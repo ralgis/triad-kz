@@ -139,7 +139,25 @@
 
             {{-- Specs + price + CTAs. --}}
             <div>
-                @if($product->gost)
+                {{--
+                    ГОСТ / Серия from the reference table. Each badge links
+                    back to the standards page anchored on the matching
+                    entry. Falls back to the legacy free-text column for
+                    products that haven't been re-linked yet.
+                --}}
+                @if($product->gosts->isNotEmpty())
+                    <div class="mb-3 flex flex-wrap gap-2">
+                        @foreach($product->gosts as $g)
+                            <a href="{{ $g->url() }}"
+                               class="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded
+                                      {{ $g->kind === \App\Models\Gost::KIND_GOST
+                                            ? 'bg-brand-50 text-brand-700 hover:bg-brand-100'
+                                            : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
+                                {{ $g->label }}
+                            </a>
+                        @endforeach
+                    </div>
+                @elseif($product->gost)
                     <p class="text-sm text-slate-500 uppercase tracking-wider mb-2">{{ $product->gost }}</p>
                 @endif
 

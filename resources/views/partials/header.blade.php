@@ -26,6 +26,7 @@
             {{-- Desktop nav. Hidden on mobile, replaced by burger. --}}
             <nav class="hidden lg:flex items-center gap-8" aria-label="Главное меню">
                 <a href="{{ url('/catalog') }}" class="text-slate-700 hover:text-brand-600 font-medium">Каталог</a>
+                <a href="{{ url('/gosts') }}" class="text-slate-700 hover:text-brand-600 font-medium">ГОСТы и Серии</a>
                 <a href="{{ url('/blog') }}" class="text-slate-700 hover:text-brand-600 font-medium">Статьи</a>
                 <a href="{{ url('/about') }}" class="text-slate-700 hover:text-brand-600 font-medium">О компании</a>
                 <a href="{{ url('/contacts') }}" class="text-slate-700 hover:text-brand-600 font-medium">Контакты</a>
