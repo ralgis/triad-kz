@@ -6,7 +6,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
@@ -34,6 +36,26 @@ final class CatalogController extends Controller
         ['plate_diameter_mm', 'Диаметр плиты', 'мм', 1],
         ['weight_t', 'Вес', 'т', 0.001],
     ];
+
+    /**
+     * Sort key → [label, column, direction]. `_nulls_last` means
+     * products with NULL in that column are pushed to the end
+     * regardless of asc/desc (otherwise MySQL would put them first
+     * on ASC and we'd push empty cards in front of priced/weighted
+     * ones).
+     *
+     * @var array<string, array{0:string,1:string,2:string}>
+     */
+    private const SORT_OPTIONS = [
+        'name' => ['По названию (А-Я)', 'products.name', 'asc'],
+        'name_desc' => ['По названию (Я-А)', 'products.name', 'desc'],
+        'price_asc' => ['Цена: сначала дешевле', 'products.price', 'asc_nulls_last'],
+        'price_desc' => ['Цена: сначала дороже', 'products.price', 'desc_nulls_last'],
+        'weight_asc' => ['Вес: сначала легче', 'products.weight_t', 'asc_nulls_last'],
+        'weight_desc' => ['Вес: сначала тяжелее', 'products.weight_t', 'desc_nulls_last'],
+    ];
+
+    private const DEFAULT_SORT = 'name';
 
     public function index(): View
     {
@@ -73,9 +95,12 @@ final class CatalogController extends Controller
             ->with(['gosts', 'categories:id,slug']);
 
         $this->applyFilters($productsQuery, $request, $filterMeta);
+        $this->applySearch($productsQuery, $request);
+
+        $sort = $this->resolveSort((string) $request->query('sort', ''));
+        $this->applySort($productsQuery, $sort);
 
         $products = $productsQuery
-            ->orderBy('products.name')
             ->paginate(12)
             ->withQueryString();
 
@@ -85,6 +110,9 @@ final class CatalogController extends Controller
             'products' => $products,
             'filterMeta' => $filterMeta,
             'activeFilters' => $this->summarizeActive($request, $filterMeta),
+            'sortOptions' => array_map(fn ($v) => $v[0], self::SORT_OPTIONS),
+            'activeSort' => $sort,
+            'searchQuery' => (string) $request->query('q', ''),
         ]);
     }
 
@@ -100,6 +128,25 @@ final class CatalogController extends Controller
     }
 
     /**
+     * Discovery queries can't use the BelongsToMany relation because
+     * Eloquent always appends the pivot columns
+     * (category_product.category_id, category_product.product_id) to
+     * the SELECT — mixing them with MIN/MAX in strict MySQL
+     * (only_full_group_by) raises «Mixing of GROUP columns is illegal
+     * if there is no GROUP BY clause» (1140). Dropping to the raw
+     * query builder lets us write a clean aggregate-only SELECT.
+     */
+    private function categoryProductsBase(Category $category): QueryBuilder
+    {
+        return DB::table('products')
+            ->join('category_product', 'category_product.product_id', '=', 'products.id')
+            ->where('category_product.category_id', $category->id)
+            ->where('products.published', true)
+            ->where('products.listed', true)
+            ->whereNull('products.deleted_at');
+    }
+
+    /**
      * For each filter slot, return null if no product in the category
      * has data for that column. Otherwise return the (min,max) for
      * numeric or a list of distinct values for the categorical grade.
@@ -110,7 +157,7 @@ final class CatalogController extends Controller
     {
         $numeric = [];
         foreach (self::NUMERIC_FILTERS as [$column, $label, $unit, $step]) {
-            $row = $this->publishedProducts($category)
+            $row = $this->categoryProductsBase($category)
                 ->whereNotNull("products.{$column}")
                 ->selectRaw("MIN(products.{$column}) as min_v, MAX(products.{$column}) as max_v")
                 ->first();
@@ -128,7 +175,7 @@ final class CatalogController extends Controller
             ];
         }
 
-        $grades = $this->publishedProducts($category)
+        $grades = $this->categoryProductsBase($category)
             ->whereNotNull('products.concrete_grade')
             ->distinct()
             ->orderBy('products.concrete_grade')
@@ -160,6 +207,42 @@ final class CatalogController extends Controller
         }
     }
 
+    private function applySearch(BelongsToMany $query, Request $request): void
+    {
+        $q = trim((string) $request->query('q', ''));
+        if ($q === '') {
+            return;
+        }
+
+        $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $q).'%';
+        $query->where(function ($w) use ($like) {
+            $w->where('products.name', 'like', $like)
+                ->orWhere('products.sku', 'like', $like);
+        });
+    }
+
+    private function resolveSort(string $key): string
+    {
+        return array_key_exists($key, self::SORT_OPTIONS) ? $key : self::DEFAULT_SORT;
+    }
+
+    private function applySort(BelongsToMany $query, string $sortKey): void
+    {
+        [, $column, $direction] = self::SORT_OPTIONS[$sortKey];
+
+        // MySQL puts NULLs first on ASC and last on DESC — fine for
+        // strings but wrong UX for price/weight where empty values
+        // should always sit at the tail. The `IS NULL` trick adds an
+        // implicit secondary ordering that pushes them down.
+        if (str_ends_with($direction, '_nulls_last')) {
+            $base = str_replace('_nulls_last', '', $direction);
+            $query->orderByRaw("{$column} IS NULL")
+                ->orderBy($column, $base);
+        } else {
+            $query->orderBy($column, $direction);
+        }
+    }
+
     /**
      * Build a flat «(label, value)» list of active filter chips so
      * the view can render them with X-to-remove links.
@@ -170,6 +253,11 @@ final class CatalogController extends Controller
     private function summarizeActive(Request $request, array $meta): array
     {
         $chips = [];
+
+        $q = trim((string) $request->query('q', ''));
+        if ($q !== '') {
+            $chips[] = ['key' => 'q', 'label' => 'Поиск: «'.$q.'»'];
+        }
 
         foreach ($meta['numeric'] as $column => $info) {
             $min = $request->query("{$column}_min");

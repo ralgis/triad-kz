@@ -63,6 +63,34 @@
                             @endif
                         </div>
 
+                        {{-- Search by name + sku — kept at top so the most-used
+                             filter is the most reachable. Auto-search on
+                             input is tempting but doesn't combine well with
+                             the numeric fieldsets that need an explicit
+                             apply; one submit button covers the whole form. --}}
+                        <div class="space-y-1">
+                            <label for="catalog-search" class="text-xs font-medium text-slate-700">Поиск по названию или артикулу</label>
+                            <input type="search"
+                                   id="catalog-search"
+                                   name="q"
+                                   value="{{ $searchQuery }}"
+                                   placeholder="например: КС10 или ФБС"
+                                   class="w-full rounded border-slate-300 text-sm px-3 py-2 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 focus:outline-none">
+                        </div>
+
+                        {{-- Sort selector inside the same form so applying
+                             a filter doesn't reset the sort. --}}
+                        <div class="space-y-1">
+                            <label for="catalog-sort" class="text-xs font-medium text-slate-700">Сортировка</label>
+                            <select id="catalog-sort"
+                                    name="sort"
+                                    class="w-full rounded border-slate-300 text-sm px-3 py-2 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 focus:outline-none">
+                                @foreach($sortOptions as $key => $label)
+                                    <option value="{{ $key }}" @selected($activeSort === $key)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         @foreach($filterMeta['numeric'] as $column => $info)
                             <fieldset class="space-y-1">
                                 <legend class="text-xs font-medium text-slate-700">
