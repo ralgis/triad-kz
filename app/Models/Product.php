@@ -32,7 +32,6 @@ class Product extends Model implements HasMedia, HasPublicUrl
         'name',
         'slug',
         'sku',
-        'gost',
         // Geometry — мм
         'length_mm',
         'width_mm',
@@ -51,8 +50,6 @@ class Product extends Model implements HasMedia, HasPublicUrl
         'mesh_rod_diameter_mm',
         'mesh_cell_length_mm',
         'mesh_cell_width_mm',
-        // Legacy JSON (transitional — kept until prod re-extract is verified)
-        'dimensions',
         'price',
         'price_unit',
         'price_visible',
@@ -73,7 +70,6 @@ class Product extends Model implements HasMedia, HasPublicUrl
     protected function casts(): array
     {
         return array_merge([
-            'dimensions' => 'array',
             'length_mm' => 'integer',
             'width_mm' => 'integer',
             'height_mm' => 'integer',

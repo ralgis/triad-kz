@@ -198,17 +198,13 @@ final class ImportTriadContent extends Command
             // Parse ГОСТ/Серия from the «<li>ГОСТ/Серия — X / Y</li>»
             // bullet inside post_content. Numeric codes are matched
             // against the seeded reference; unmatched lines warn but
-            // don't block the import.
+            // don't block the import. Match IDs go straight to the
+            // pivot via sync() below — no free-text column to carry.
             $rawGostLine = GostMatcher::extractGostLine((string) $r->post_content);
             $gostIds = GostMatcher::matchGostIds($rawGostLine, $gostsByCode);
             if ($rawGostLine !== '' && empty($gostIds)) {
                 $this->warn("  ! unmatched ГОСТ/Серия line: {$rawGostLine}");
             }
-
-            // Legacy free-text ГОСТ column — kept until we drop it in a
-            // follow-up migration. Carries the raw line for traceability
-            // even after the relation goes through.
-            $gost = $rawGostLine ?: null;
 
             // Real prices set in WP — but per Phase 0 agreement nothing
             // was actually selling there, so we ship with prices hidden
@@ -220,7 +216,6 @@ final class ImportTriadContent extends Command
                 [
                     'name' => $r->post_title,
                     'sku' => $r->sku ?: null,
-                    'gost' => $gost,
                     'description' => $this->cleanContent((string) $r->post_content),
                     'price' => $r->price !== null && $r->price !== '' ? (string) $r->price : null,
                     'price_unit' => 'за шт',

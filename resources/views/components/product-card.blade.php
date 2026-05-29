@@ -41,8 +41,6 @@
 
         @if($firstGost)
             <p class="text-xs text-slate-500 uppercase tracking-wide mb-1">{{ $firstGost->fullLabel() }}</p>
-        @elseif($product->gost)
-            <p class="text-xs text-slate-500 uppercase tracking-wide mb-1">{{ $product->gost }}</p>
         @endif
 
         <h3 class="font-medium text-slate-900 leading-snug mb-2">

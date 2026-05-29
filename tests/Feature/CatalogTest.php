@@ -53,8 +53,15 @@ it('renders breadcrumbs on category page', function () {
 
 it('shows product detail at nested URL', function () {
     $cat = Category::factory()->create(['name' => 'Кольца', 'slug' => 'koltsa']);
-    $p = Product::factory()->create(['name' => 'КС10', 'slug' => 'ks-10', 'gost' => 'ГОСТ 8020-90']);
+    $p = Product::factory()->create(['name' => 'КС10', 'slug' => 'ks-10']);
     $p->categories()->attach($cat);
+
+    $gost = \App\Models\Gost::create([
+        'kind' => \App\Models\Gost::KIND_GOST,
+        'label' => '8020-90',
+        'slug' => 'gost-8020-90',
+    ]);
+    $p->gosts()->attach($gost);
 
     $r = $this->get('/catalog/koltsa/ks-10');
 

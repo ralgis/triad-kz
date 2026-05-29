@@ -159,8 +159,6 @@
                             </a>
                         @endforeach
                     </div>
-                @elseif($product->gost)
-                    <p class="text-sm text-slate-500 uppercase tracking-wider mb-2">{{ $product->gost }}</p>
                 @endif
 
                 <h1 class="text-2xl sm:text-3xl font-semibold text-slate-900">{{ $product->name }}</h1>
