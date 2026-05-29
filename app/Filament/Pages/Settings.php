@@ -287,17 +287,23 @@ class Settings extends Page implements HasForms
                                         ->dehydrateStateUsing(fn ($state) => blank($state)
                                             ? null
                                             : json_decode((string) $state, associative: true)),
+                                    Toggle::make('analytics_enabled')
+                                        ->label('Включить аналитику на сайте')
+                                        ->default(false)
+                                        ->columnSpanFull()
+                                        ->helperText('Главный рубильник для трекеров ниже. Выключи на время пока сайт на dev — будут собираться наши тестовые клики. Включи после cutover\'а на prod-домен.'),
+
                                     TextInput::make('analytics_yandex_id')
                                         ->label('Яндекс.Метрика — Counter ID')
                                         ->placeholder('38595400')
                                         ->maxLength(20)
-                                        ->helperText('Только цифры. Найти можно в metrika.yandex.ru → ваш счётчик → Настройки. Скрипт счётчика рендерится только в production-окружении.'),
+                                        ->helperText('Только цифры. Найти можно в metrika.yandex.ru → ваш счётчик → Настройки.'),
 
                                     TextInput::make('analytics_google_id')
                                         ->label('Google Analytics 4 — Measurement ID')
                                         ->placeholder('G-XXXXXXXXXX')
                                         ->maxLength(20)
-                                        ->helperText('Формат G-XXXXXXXX (GA4). Старый Universal Analytics (UA-…) отключен Google\'ом с 01.07.2023 — не работает, можно не вписывать. Скрипт рендерится только в production.'),
+                                        ->helperText('Формат G-XXXXXXXX (GA4). Старый Universal Analytics (UA-…) отключен Google\'ом с 01.07.2023 — не работает, можно не вписывать.'),
                                 ]),
                             ]),
                     ]),

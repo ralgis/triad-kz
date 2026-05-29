@@ -83,6 +83,7 @@ class Setting extends Model implements HasMedia
         'schema_org_organization',
         'analytics_yandex_id',
         'analytics_google_id',
+        'analytics_enabled',
     ];
 
     protected function casts(): array
@@ -93,6 +94,7 @@ class Setting extends Model implements HasMedia
             'schema_org_organization' => 'array',
             'working_hours' => 'array',
             'special_days' => 'array',
+            'analytics_enabled' => 'boolean',
         ];
     }
 

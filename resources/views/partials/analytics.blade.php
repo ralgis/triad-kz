@@ -2,10 +2,11 @@
     Public-site analytics partial. Renders Яндекс.Метрика и Google
     GA4 (gtag.js) трекеры из ID, заполненных админом в Settings.
 
-    Env-gated to `production` — dev.triad.kz traffic (наши тесты)
-    не должно засорять prod-отчёты. Без этого counter ID 38595400
-    получит хиты с каждого нашего клика на /admin/settings, а в
-    отчётах будет смесь real-юзеров и нас.
+    Gated by an explicit «Включить аналитику» Toggle в admin (поле
+    settings.analytics_enabled). Раньше был env('production') gate
+    — он "магический" (легко забыть после cutover'а), плюс не давал
+    отдельно проверить трекеры на dev перед запуском. Toggle —
+    видимый, явный, self-documenting в форме.
 
     Я.Метрика поддерживает любой counter ID (число). Google поле
     рендерится только для GA4-формата (G-XXXXXXXXXX). Старый UA-…
@@ -24,12 +25,12 @@
 --}}
 @php
     $settings ??= \App\Models\Setting::current();
+    $enabled = (bool) ($settings->analytics_enabled ?? false);
     $yandexId = trim((string) ($settings->analytics_yandex_id ?? ''));
     $googleId = trim((string) ($settings->analytics_google_id ?? ''));
-    $isProd = app()->environment('production');
 @endphp
 
-@if($isProd && $yandexId !== '' && ctype_digit($yandexId))
+@if($enabled && $yandexId !== '' && ctype_digit($yandexId))
     {{-- Яндекс.Метрика — counter snippet, copy-paste-стандарт от Я.Метрики --}}
     <script type="text/javascript">
         (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -48,7 +49,7 @@
     <noscript><div><img src="https://mc.yandex.ru/watch/{{ $yandexId }}" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 @endif
 
-@if($isProd && str_starts_with($googleId, 'G-'))
+@if($enabled && str_starts_with($googleId, 'G-'))
     {{-- Google Analytics 4 — gtag.js, only when ID is in GA4 format --}}
     <script async src="https://www.googletagmanager.com/gtag/js?id={{ $googleId }}"></script>
     <script>
