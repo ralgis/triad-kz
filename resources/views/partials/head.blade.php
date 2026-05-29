@@ -19,9 +19,12 @@
 
 <title>{{ $title }}</title>
 
-<link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
-<link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
-<link rel="apple-touch-icon" href="{{ asset('favicon.png') }}">
+{{--
+    Inline SVG placeholder — letter Т on the brand-dark background. Drop
+    a real favicon.ico / favicon.png into public/ and uncomment the lines
+    below once the client supplies one.
+--}}
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='12' fill='%23253142'/%3E%3Ctext x='50' y='72' font-family='Arial,sans-serif' font-size='66' font-weight='700' text-anchor='middle' fill='white'%3E%D0%A2%3C/text%3E%3C/svg%3E">
 @if($description !== '')
     <meta name="description" content="{{ $description }}">
 @endif
