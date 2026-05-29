@@ -48,6 +48,11 @@ parameters:
         # Tests verify they work at runtime; suppress only inside /tests.
         - identifier: method.notFound
           path: tests/*
+        # spatie/laravel-medialibrary's published config references
+        # MediaLibraryPro\TemporaryUpload which is a paid add-on we
+        # don't have. The config key is only used by that package.
+        - identifier: class.notFound
+          path: config/media-library.php
 
     # Don't fail when an ignore-pattern stops matching (e.g. we fixed an
     # error and the suppressor became unused). Avoids noise on cleanup PRs.

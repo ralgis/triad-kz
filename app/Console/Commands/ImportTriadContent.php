@@ -147,11 +147,13 @@ final class ImportTriadContent extends Command
             SELECT p.ID, p.post_title, p.post_name, p.post_content, p.post_excerpt,
                    sku.meta_value      AS sku,
                    price.meta_value    AS price,
-                   thumb.meta_value    AS thumb_id
+                   thumb.meta_value    AS thumb_id,
+                   gallery.meta_value  AS gallery_ids
             FROM G5cX6018k4_posts p
-            LEFT JOIN G5cX6018k4_postmeta sku   ON sku.post_id=p.ID   AND sku.meta_key='_sku'
-            LEFT JOIN G5cX6018k4_postmeta price ON price.post_id=p.ID AND price.meta_key='_regular_price'
-            LEFT JOIN G5cX6018k4_postmeta thumb ON thumb.post_id=p.ID AND thumb.meta_key='_thumbnail_id'
+            LEFT JOIN G5cX6018k4_postmeta sku     ON sku.post_id=p.ID     AND sku.meta_key='_sku'
+            LEFT JOIN G5cX6018k4_postmeta price   ON price.post_id=p.ID   AND price.meta_key='_regular_price'
+            LEFT JOIN G5cX6018k4_postmeta thumb   ON thumb.post_id=p.ID   AND thumb.meta_key='_thumbnail_id'
+            LEFT JOIN G5cX6018k4_postmeta gallery ON gallery.post_id=p.ID AND gallery.meta_key='_product_image_gallery'
             WHERE p.post_type='product'
               AND p.post_status='publish'
               AND p.post_title NOT REGEXP '^[A-Za-z]'
@@ -222,12 +224,19 @@ final class ImportTriadContent extends Command
                 $product->categories()->sync($atCatIds);
             }
 
-            // Featured image → 'real' Media collection. The 'blueprint'
-            // collection stays empty for now; admin will upload schematics
-            // manually if available (the legacy dump didn't separate
-            // photos vs blueprints).
+            // In this legacy dataset, _thumbnail_id is the BLUEPRINT
+            // (schematic / чертёж with dimensions) and gallery items are
+            // the actual product photos. Confirmed by the client. The
+            // mapping below reflects that:
+            //   _thumbnail_id           → blueprint  (singleFile)
+            //   gallery[0]              → real       (singleFile, primary photo)
+            //   gallery[1..n]           → gallery    (multi)
             if ($zip !== null && $r->thumb_id) {
-                $this->attachThumbnail($product, (int) $r->thumb_id, $zip);
+                $this->attachToCollection($product, 'blueprint', (int) $r->thumb_id, $zip);
+            }
+
+            if ($zip !== null && $r->gallery_ids) {
+                $this->attachGallery($product, (string) $r->gallery_ids, $zip);
             }
 
             $bar->advance();
@@ -289,11 +298,16 @@ final class ImportTriadContent extends Command
         return $zip;
     }
 
-    private function attachThumbnail(Product $product, int $thumbId, ZipArchive $zip): void
+    /**
+     * Attach a single WP attachment to a singleFile collection
+     * (blueprint or real). Idempotent: skips when the same source
+     * file is already attached.
+     */
+    private function attachToCollection(Product $product, string $collection, int $attachmentId, ZipArchive $zip): void
     {
         $path = DB::connection('wp_legacy')
             ->table('postmeta')
-            ->where('post_id', $thumbId)
+            ->where('post_id', $attachmentId)
             ->where('meta_key', '_wp_attached_file')
             ->value('meta_value');
 
@@ -307,8 +321,7 @@ final class ImportTriadContent extends Command
             return;
         }
 
-        // Avoid re-uploading the same source on idempotent re-runs.
-        if ($product->getFirstMedia('real')?->file_name === basename($entry)) {
+        if ($product->getFirstMedia($collection)?->file_name === basename($entry)) {
             fclose($stream);
 
             return;
@@ -318,11 +331,59 @@ final class ImportTriadContent extends Command
         file_put_contents($tmp, stream_get_contents($stream));
         fclose($stream);
 
-        $product->clearMediaCollection('real');
+        $product->clearMediaCollection($collection);
         $product->addMedia($tmp)
             ->preservingOriginal(false)
             ->usingFileName(basename($entry))
-            ->toMediaCollection('real');
+            ->toMediaCollection($collection);
+    }
+
+    /**
+     * Split the WC gallery: first item is the primary product photo
+     * (singleFile 'real' collection), remainder are additional angle
+     * shots (multi 'gallery' collection). Mirrors the catalog UI which
+     * shows one main «Фото изделия» tab and a separate gallery strip.
+     */
+    private function attachGallery(Product $product, string $idsCsv, ZipArchive $zip): void
+    {
+        $ids = array_values(array_filter(array_map('intval', explode(',', $idsCsv))));
+        if (! $ids) {
+            return;
+        }
+
+        $paths = DB::connection('wp_legacy')
+            ->table('postmeta')
+            ->whereIn('post_id', $ids)
+            ->where('meta_key', '_wp_attached_file')
+            ->pluck('meta_value', 'post_id');
+
+        // Wipe both target collections and rebuild — both involve >1
+        // WP attachment_id and idempotency by file_name gets messy
+        // with reorder.
+        $product->clearMediaCollection('real');
+        $product->clearMediaCollection('gallery');
+
+        foreach ($ids as $i => $attId) {
+            $relPath = $paths[$attId] ?? null;
+            if (! $relPath) {
+                continue;
+            }
+
+            $entry = 'files/wp-content/uploads/'.$relPath;
+            $stream = $zip->getStream($entry);
+            if ($stream === false) {
+                continue;
+            }
+
+            $tmp = tempnam(sys_get_temp_dir(), 'triad-gal-');
+            file_put_contents($tmp, stream_get_contents($stream));
+            fclose($stream);
+
+            $product->addMedia($tmp)
+                ->preservingOriginal(false)
+                ->usingFileName(basename($entry))
+                ->toMediaCollection($i === 0 ? 'real' : 'gallery');
+        }
     }
 
     /**

@@ -991,6 +991,7 @@ class ComposerStaticInit2db3f723434a12fb0127e1533df470df
         'App\\Support\\DimensionLabels' => __DIR__ . '/../..' . '/app/Support/DimensionLabels.php',
         'App\\Support\\Migrations\\SeoFields' => __DIR__ . '/../..' . '/app/Support/Migrations/SeoFields.php',
         'App\\Support\\Translit' => __DIR__ . '/../..' . '/app/Support/Translit.php',
+        'App\\Support\\TriadPathGenerator' => __DIR__ . '/../..' . '/app/Support/TriadPathGenerator.php',
         'App\\Traits\\HasSeo' => __DIR__ . '/../..' . '/app/Traits/HasSeo.php',
         'App\\Traits\\HasSlugRedirect' => __DIR__ . '/../..' . '/app/Traits/HasSlugRedirect.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',

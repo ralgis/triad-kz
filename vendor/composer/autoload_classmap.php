@@ -107,6 +107,7 @@ return array(
     'App\\Support\\DimensionLabels' => $baseDir . '/app/Support/DimensionLabels.php',
     'App\\Support\\Migrations\\SeoFields' => $baseDir . '/app/Support/Migrations/SeoFields.php',
     'App\\Support\\Translit' => $baseDir . '/app/Support/Translit.php',
+    'App\\Support\\TriadPathGenerator' => $baseDir . '/app/Support/TriadPathGenerator.php',
     'App\\Traits\\HasSeo' => $baseDir . '/app/Traits/HasSeo.php',
     'App\\Traits\\HasSlugRedirect' => $baseDir . '/app/Traits/HasSlugRedirect.php',
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
