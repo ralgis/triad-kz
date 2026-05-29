@@ -9,6 +9,7 @@ return array(
     'App\\Console\\Commands\\BuildLegacyRedirects' => $baseDir . '/app/Console/Commands/BuildLegacyRedirects.php',
     'App\\Console\\Commands\\CreateAdminCommand' => $baseDir . '/app/Console/Commands/CreateAdminCommand.php',
     'App\\Console\\Commands\\ImportTriadContent' => $baseDir . '/app/Console/Commands/ImportTriadContent.php',
+    'App\\Console\\Commands\\TriadDiagCommand' => $baseDir . '/app/Console/Commands/TriadDiagCommand.php',
     'App\\Contracts\\HasPublicUrl' => $baseDir . '/app/Contracts/HasPublicUrl.php',
     'App\\Enums\\CustomerType' => $baseDir . '/app/Enums/CustomerType.php',
     'App\\Enums\\DeliveryMethod' => $baseDir . '/app/Enums/DeliveryMethod.php',

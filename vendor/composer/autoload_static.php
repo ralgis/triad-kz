@@ -893,6 +893,7 @@ class ComposerStaticInit2db3f723434a12fb0127e1533df470df
         'App\\Console\\Commands\\BuildLegacyRedirects' => __DIR__ . '/../..' . '/app/Console/Commands/BuildLegacyRedirects.php',
         'App\\Console\\Commands\\CreateAdminCommand' => __DIR__ . '/../..' . '/app/Console/Commands/CreateAdminCommand.php',
         'App\\Console\\Commands\\ImportTriadContent' => __DIR__ . '/../..' . '/app/Console/Commands/ImportTriadContent.php',
+        'App\\Console\\Commands\\TriadDiagCommand' => __DIR__ . '/../..' . '/app/Console/Commands/TriadDiagCommand.php',
         'App\\Contracts\\HasPublicUrl' => __DIR__ . '/../..' . '/app/Contracts/HasPublicUrl.php',
         'App\\Enums\\CustomerType' => __DIR__ . '/../..' . '/app/Enums/CustomerType.php',
         'App\\Enums\\DeliveryMethod' => __DIR__ . '/../..' . '/app/Enums/DeliveryMethod.php',
