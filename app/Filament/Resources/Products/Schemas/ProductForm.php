@@ -52,6 +52,7 @@ class ProductForm
                     Select::make('gosts')
                         ->label('ГОСТ / Серия')
                         ->relationship('gosts', 'label', fn ($query) => $query->orderBy('sort_order')->orderBy('label'))
+                        ->getOptionLabelFromRecordUsing(fn (Gost $r) => $r->fullLabel())
                         ->multiple()
                         ->preload()
                         ->searchable()
@@ -67,10 +68,11 @@ class ProductForm
                                 ->default(Gost::KIND_GOST)
                                 ->native(false),
                             TextInput::make('label')
-                                ->label('Название')
+                                ->label('Номер стандарта (без приставки)')
                                 ->required()
                                 ->maxLength(200)
-                                ->placeholder('ГОСТ 8020-90'),
+                                ->placeholder('8020-90')
+                                ->helperText('Приставка «ГОСТ»/«Серия» подставится автоматически по типу.'),
                             TextInput::make('code')
                                 ->label('Цифровой код (опц.)')
                                 ->maxLength(100)

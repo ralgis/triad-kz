@@ -153,7 +153,7 @@
                                       {{ $g->kind === \App\Models\Gost::KIND_GOST
                                             ? 'bg-brand-50 text-brand-700 hover:bg-brand-100'
                                             : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
-                                {{ $g->label }}
+                                {{ $g->fullLabel() }}
                             </a>
                         @endforeach
                     </div>

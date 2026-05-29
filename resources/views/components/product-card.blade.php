@@ -40,7 +40,7 @@
         @endphp
 
         @if($firstGost)
-            <p class="text-xs text-slate-500 uppercase tracking-wide mb-1">{{ $firstGost->label }}</p>
+            <p class="text-xs text-slate-500 uppercase tracking-wide mb-1">{{ $firstGost->fullLabel() }}</p>
         @elseif($product->gost)
             <p class="text-xs text-slate-500 uppercase tracking-wide mb-1">{{ $product->gost }}</p>
         @endif

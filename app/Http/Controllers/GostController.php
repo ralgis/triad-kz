@@ -22,6 +22,7 @@ final class GostController extends Controller
     public function index(): View
     {
         $gosts = Gost::query()
+            ->with(['relatesToGost', 'supersededBy', 'series'])
             ->ordered()
             ->get();
 

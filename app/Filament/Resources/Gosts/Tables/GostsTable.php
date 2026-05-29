@@ -11,10 +11,13 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class GostsTable
 {
@@ -33,14 +36,27 @@ class GostsTable
 
                 TextColumn::make('label')
                     ->label('Название')
+                    ->formatStateUsing(fn (Gost $record): string => $record->fullLabel())
                     ->searchable()
                     ->sortable()
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->description(fn (Gost $record): ?string => $record->title
+                        ? mb_substr($record->title, 0, 80).(mb_strlen($record->title) > 80 ? '…' : '')
+                        : null),
 
-                TextColumn::make('code')
-                    ->label('Код')
+                IconColumn::make('is_current')
+                    ->label('Действует')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-archive-box-x-mark')
+                    ->trueColor('success')
+                    ->falseColor('warning'),
+
+                TextColumn::make('relatesToGost.label')
+                    ->label('В рамках ГОСТ')
+                    ->formatStateUsing(fn ($state, Gost $record): ?string => $record->relatesToGost?->fullLabel())
                     ->color('gray')
-                    ->searchable()
+                    ->placeholder('—')
                     ->toggleable(),
 
                 TextColumn::make('products_count')
@@ -67,6 +83,10 @@ class GostsTable
                         Gost::KIND_GOST => 'ГОСТ',
                         Gost::KIND_SERIYA => 'Серия',
                     ]),
+                Filter::make('current')
+                    ->label('Только действующие')
+                    ->query(fn (Builder $q) => $q->where('is_current', true))
+                    ->toggle(),
                 TrashedFilter::make(),
             ])
             ->recordActions([
