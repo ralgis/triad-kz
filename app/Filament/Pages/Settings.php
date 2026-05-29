@@ -9,13 +9,13 @@ use BackedEnum;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 
@@ -106,7 +106,8 @@ class Settings extends Page implements HasForms
                                         ->rows(3)
                                         ->columnSpanFull()
                                         ->helperText('Например: Пн-Пт 9:00-18:00; Сб 10:00-15:00; Вс выходной.'),
-                                    View::make('filament.forms.leaflet-map-picker')
+                                    ViewField::make('map')
+                                        ->view('filament.forms.leaflet-map-picker')
                                         ->columnSpanFull(),
                                     TextInput::make('map_lat')
                                         ->label('Широта (lat)')
