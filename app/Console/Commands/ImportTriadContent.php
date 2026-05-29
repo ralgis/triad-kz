@@ -90,7 +90,7 @@ final class ImportTriadContent extends Command
 
         DB::transaction(function () use ($only, $zip) {
             if (in_array('categories', $only, true)) {
-                $this->importCategories();
+                $this->importCategories($zip);
             }
             if (in_array('products', $only, true)) {
                 $this->importProducts($zip);
@@ -106,21 +106,27 @@ final class ImportTriadContent extends Command
         return self::SUCCESS;
     }
 
-    private function importCategories(): void
+    private function importCategories(?ZipArchive $zip = null): void
     {
-        $rows = DB::connection('wp_legacy')
-            ->table('terms')
-            ->whereIn('term_id', array_keys(self::CATEGORY_MAP))
-            ->get(['term_id', 'name']);
+        // WC stores category covers in woocommerce_termmeta under
+        // `thumbnail_id` (separate from generic termmeta) — pull both
+        // in one shot so the cover hop is a single read per term.
+        $rows = DB::connection('wp_legacy')->select('
+            SELECT t.term_id, t.name, tm.meta_value AS thumb_id
+            FROM G5cX6018k4_terms t
+            LEFT JOIN G5cX6018k4_woocommerce_termmeta tm
+              ON tm.woocommerce_term_id=t.term_id AND tm.meta_key="thumbnail_id"
+            WHERE t.term_id IN ('.implode(',', array_keys(self::CATEGORY_MAP)).')
+        ');
 
-        $bar = $this->output->createProgressBar($rows->count());
+        $bar = $this->output->createProgressBar(count($rows));
         $bar->setFormat('Categories: %current%/%max% [%bar%] %message%');
 
         foreach ($rows as $row) {
             $map = self::CATEGORY_MAP[$row->term_id];
             $bar->setMessage($row->name);
 
-            Category::updateOrCreate(
+            $category = Category::updateOrCreate(
                 ['slug' => $map['slug']],
                 [
                     'name' => $row->name,
@@ -128,6 +134,10 @@ final class ImportTriadContent extends Command
                     'published' => true,
                 ],
             );
+
+            if ($zip !== null && $row->thumb_id) {
+                $this->attachAttachmentToModel($category, 'cover', (int) $row->thumb_id, $zip);
+            }
 
             $bar->advance();
         }
@@ -232,7 +242,7 @@ final class ImportTriadContent extends Command
             //   gallery[0]              → real       (singleFile, primary photo)
             //   gallery[1..n]           → gallery    (multi)
             if ($zip !== null && $r->thumb_id) {
-                $this->attachToCollection($product, 'blueprint', (int) $r->thumb_id, $zip);
+                $this->attachAttachmentToModel($product, 'blueprint', (int) $r->thumb_id, $zip);
             }
 
             if ($zip !== null && $r->gallery_ids) {
@@ -299,12 +309,14 @@ final class ImportTriadContent extends Command
     }
 
     /**
-     * Attach a single WP attachment to a singleFile collection
-     * (blueprint or real). Idempotent: skips when the same source
-     * file is already attached.
+     * Attach a single WP attachment to a singleFile collection on any
+     * Spatie-HasMedia model (Product blueprint, Category cover, …).
+     * Idempotent: skips when the same source file is already attached.
      */
-    private function attachToCollection(Product $product, string $collection, int $attachmentId, ZipArchive $zip): void
+    private function attachAttachmentToModel(object $model, string $collection, int $attachmentId, ZipArchive $zip): void
     {
+        assert(method_exists($model, 'getFirstMedia'));
+
         $path = DB::connection('wp_legacy')
             ->table('postmeta')
             ->where('post_id', $attachmentId)
@@ -321,7 +333,7 @@ final class ImportTriadContent extends Command
             return;
         }
 
-        if ($product->getFirstMedia($collection)?->file_name === basename($entry)) {
+        if ($model->getFirstMedia($collection)?->file_name === basename($entry)) {
             fclose($stream);
 
             return;
@@ -331,8 +343,8 @@ final class ImportTriadContent extends Command
         file_put_contents($tmp, stream_get_contents($stream));
         fclose($stream);
 
-        $product->clearMediaCollection($collection);
-        $product->addMedia($tmp)
+        $model->clearMediaCollection($collection);
+        $model->addMedia($tmp)
             ->preservingOriginal(false)
             ->usingFileName(basename($entry))
             ->toMediaCollection($collection);
