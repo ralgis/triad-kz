@@ -175,12 +175,12 @@ class ProductForm
                         ->minValue(0)
                         ->step(0.001),
 
-                    TextInput::make('weight_kg')
-                        ->label('Вес, кг')
+                    TextInput::make('weight_t')
+                        ->label('Вес, т')
                         ->numeric()
                         ->minValue(0)
-                        ->step(0.01)
-                        ->helperText('Если legacy данные были в тоннах — конвертируется при импорте.'),
+                        ->step(0.001)
+                        ->helperText('В тоннах. Например, 0.68 или 1.275.'),
 
                     TextInput::make('steel_kg')
                         ->label('Расход стали, кг')
@@ -267,11 +267,16 @@ class ProductForm
                 ]),
 
             Section::make('Публикация')
+                ->description('Опубликовано = вообще доступно (false → 404). Показывать в каталоге = в листингах и sitemap (false → прямой URL работает, но в нав не виден — для архивных позиций со старыми внешними ссылками).')
                 ->columns(3)
                 ->schema([
                     Toggle::make('published')
                         ->label('Опубликовано')
                         ->default(false),
+
+                    Toggle::make('listed')
+                        ->label('Показывать в каталоге')
+                        ->default(true),
 
                     Toggle::make('featured')
                         ->label('Рекомендуемое (для главной)')

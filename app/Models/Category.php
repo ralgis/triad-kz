@@ -35,6 +35,7 @@ class Category extends Model implements HasMedia, HasPublicUrl
         'description',
         'order',
         'published',
+        'listed',
         // SEO
         'meta_title',
         'meta_description',
@@ -48,6 +49,7 @@ class Category extends Model implements HasMedia, HasPublicUrl
         return array_merge([
             'order' => 'integer',
             'published' => 'boolean',
+            'listed' => 'boolean',
         ], $this->seoCasts());
     }
 

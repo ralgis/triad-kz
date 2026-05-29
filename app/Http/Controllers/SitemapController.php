@@ -39,8 +39,13 @@ final class SitemapController extends Controller
             ->add(Url::create(url('/blog'))->setPriority(0.7))
             ->add(Url::create(url('/contacts'))->setPriority(0.6));
 
+        // `listed=false` rows stay reachable on direct URL but are
+        // intentionally excluded from the sitemap — admin uses the
+        // flag exactly to keep these out of search engines' fresh
+        // crawl set without breaking inbound links.
         Category::query()
             ->where('published', true)
+            ->where('listed', true)
             ->get()
             ->each(fn (Category $c) => $sitemap->add(
                 Url::create($c->url())
@@ -50,6 +55,7 @@ final class SitemapController extends Controller
 
         Product::query()
             ->published()
+            ->listed()
             ->with('categories:id,slug')
             ->get()
             ->each(fn (Product $p) => $sitemap->add(

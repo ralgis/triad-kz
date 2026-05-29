@@ -22,12 +22,14 @@ final class HomeController extends Controller
         $categories = Category::query()
             ->whereNull('parent_id')
             ->where('published', true)
+            ->where('listed', true)
             ->orderBy('order')
             ->limit(8)
             ->get();
 
         $products = Product::query()
             ->published()
+            ->listed()
             ->featured()
             ->with(['categories:id,slug', 'gosts'])
             ->limit(6)

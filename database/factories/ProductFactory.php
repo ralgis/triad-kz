@@ -28,7 +28,7 @@ class ProductFactory extends Factory
                 'height' => $height,
                 'wall' => fake()->numberBetween(50, 120),
             ],
-            'weight_kg' => fake()->numberBetween(200, 3000),
+            'weight_t' => fake()->randomFloat(3, 0.2, 3.0),
             'price' => fake()->numberBetween(5000, 80000),
             'price_unit' => 'за шт',
             'price_visible' => true,

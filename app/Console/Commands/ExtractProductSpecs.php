@@ -52,7 +52,7 @@ final class ExtractProductSpecs extends Command
         'объем бетона' => 'concrete_volume_m3',
         'объём бетона' => 'concrete_volume_m3',
         'марка бетона' => 'concrete_grade',
-        'вес' => 'weight_kg',
+        'вес' => 'weight_t',
         'расход стали' => 'steel_kg',
     ];
 
@@ -158,7 +158,7 @@ final class ExtractProductSpecs extends Command
      * the column. Legacy data has consistent quirks:
      *  - decimals come with «.» not «,», but we tolerate both
      *  - mm values come as plain integers with «мм» suffix
-     *  - weight comes as «0.68 тн.» — convert to kg (×1000)
+     *  - weight comes as «0.68 тн.» — stored as tonnes (no conversion)
      *  - concrete grade comes as «М300» / «М350» — preserve as-is
      */
     private function castValue(string $column, string $value): int|float|string|null
@@ -187,8 +187,8 @@ final class ExtractProductSpecs extends Command
 
             'steel_kg' => is_numeric($clean) ? (float) $clean : null,
 
-            // Legacy weight is in tons («0.68 тн.») → kg.
-            'weight_kg' => is_numeric($clean) ? round(((float) $clean) * 1000, 2) : null,
+            // Legacy weight is in tonnes («0.68 тн.») — stored as-is.
+            'weight_t' => is_numeric($clean) ? (float) $clean : null,
 
             default => null,
         };

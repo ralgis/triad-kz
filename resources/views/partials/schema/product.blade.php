@@ -30,10 +30,10 @@
         'image' => $images ?: null,
         'url' => $product->url($category ?? null),
         'additionalProperty' => $additionalProperty ?: null,
-        'weight' => $product->weight_kg ? [
+        'weight' => $product->weight_t ? [
             '@type' => 'QuantitativeValue',
-            'value' => (string) $product->weight_kg,
-            'unitCode' => 'KGM',
+            'value' => (string) $product->weight_t,
+            'unitCode' => 'TNE',
         ] : null,
         'offers' => ($product->price_visible && $product->price !== null) ? [
             '@type' => 'Offer',

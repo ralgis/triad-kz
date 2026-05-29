@@ -61,7 +61,12 @@ class CategoryForm
                     Toggle::make('published')
                         ->label('Опубликовано')
                         ->default(true)
-                        ->columnSpanFull(),
+                        ->helperText('Выключи чтобы вообще скрыть категорию (404 для всех)'),
+
+                    Toggle::make('listed')
+                        ->label('Показывать в каталоге')
+                        ->default(true)
+                        ->helperText('Выключи чтобы убрать из навигации каталога, оставив прямой URL рабочим'),
 
                     RichEditor::make('description')
                         ->label('Описание')

@@ -46,7 +46,7 @@ class Product extends Model implements HasMedia, HasPublicUrl
         'concrete_grade',
         'concrete_volume_m3',
         'steel_kg',
-        'weight_kg',
+        'weight_t',
         // Welded mesh (категория сетка-сварная)
         'mesh_rod_diameter_mm',
         'mesh_cell_length_mm',
@@ -61,6 +61,7 @@ class Product extends Model implements HasMedia, HasPublicUrl
         'published',
         'featured',
         'in_stock',
+        'listed',
         // SEO
         'meta_title',
         'meta_description',
@@ -83,7 +84,7 @@ class Product extends Model implements HasMedia, HasPublicUrl
             'hole_diameter_mm' => 'integer',
             'concrete_volume_m3' => 'decimal:3',
             'steel_kg' => 'decimal:2',
-            'weight_kg' => 'decimal:2',
+            'weight_t' => 'decimal:3',
             'mesh_rod_diameter_mm' => 'integer',
             'mesh_cell_length_mm' => 'integer',
             'mesh_cell_width_mm' => 'integer',
@@ -92,6 +93,7 @@ class Product extends Model implements HasMedia, HasPublicUrl
             'published' => 'boolean',
             'featured' => 'boolean',
             'in_stock' => 'boolean',
+            'listed' => 'boolean',
         ], $this->seoCasts());
     }
 
@@ -119,7 +121,7 @@ class Product extends Model implements HasMedia, HasPublicUrl
             ['hole_diameter_mm', 'Диаметр отверстия', $this->hole_diameter_mm, 'мм'],
             ['concrete_volume_m3', 'Объём бетона', $this->concrete_volume_m3, 'м³'],
             ['concrete_grade', 'Марка бетона', $this->concrete_grade, ''],
-            ['weight_kg', 'Вес', $this->weight_kg, 'кг'],
+            ['weight_t', 'Вес', $this->weight_t, 'т'],
             ['steel_kg', 'Расход стали', $this->steel_kg, 'кг'],
             // Welded mesh — only one or two will be non-null and only
             // for the сетка-сварная category, so they sort to the
@@ -239,5 +241,16 @@ class Product extends Model implements HasMedia, HasPublicUrl
     public function scopeFeatured(Builder $q): Builder
     {
         return $q->where('featured', true);
+    }
+
+    /**
+     * Listed = appears in catalog navigation / category listings /
+     * sitemap. Direct URL still works when listed=false (as long as
+     * published=true) so externally-linked legacy URLs keep their SEO
+     * weight.
+     */
+    public function scopeListed(Builder $q): Builder
+    {
+        return $q->where('listed', true);
     }
 }

@@ -19,6 +19,7 @@ final class CatalogController extends Controller
         $categories = Category::query()
             ->whereNull('parent_id')
             ->where('published', true)
+            ->where('listed', true)
             ->orderBy('order')
             ->orderBy('name')
             ->get();
@@ -28,20 +29,25 @@ final class CatalogController extends Controller
 
     public function show(Category $category): View
     {
-        // Avoid leaking unpublished categories via direct URL.
+        // 404 unpublished. `listed=false` still serves the page —
+        // that's the whole point of the flag (direct URL works,
+        // category just doesn't appear in the parent's listings or
+        // the sitemap).
         abort_unless($category->published, 404);
 
         $children = $category->children()
             ->where('published', true)
+            ->where('listed', true)
             ->orderBy('order')
             ->orderBy('name')
             ->get();
 
         // Calling ->published() on a BelongsToMany trips Larastan's
-        // method-resolution; inlining the same predicate sidesteps it
-        // and stays in sync with Product::scopePublished.
+        // method-resolution; inlining the same predicates sidesteps it
+        // and stays in sync with Product::scopePublished / scopeListed.
         $products = $category->products()
             ->where('products.published', true)
+            ->where('products.listed', true)
             ->with('gosts')
             ->orderBy('products.name')
             ->paginate(12)
