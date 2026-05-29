@@ -31,8 +31,14 @@ class GostsTable
                     ->colors([
                         'primary' => Gost::KIND_GOST,
                         'success' => Gost::KIND_SERIYA,
+                        'warning' => Gost::KIND_TOO,
                     ])
-                    ->formatStateUsing(fn (string $state): string => $state === Gost::KIND_GOST ? 'ГОСТ' : 'Серия'),
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        Gost::KIND_GOST => 'ГОСТ',
+                        Gost::KIND_SERIYA => 'Серия',
+                        Gost::KIND_TOO => 'СТ ТОО',
+                        default => $state,
+                    }),
 
                 TextColumn::make('label')
                     ->label('Название')
@@ -82,6 +88,7 @@ class GostsTable
                     ->options([
                         Gost::KIND_GOST => 'ГОСТ',
                         Gost::KIND_SERIYA => 'Серия',
+                        Gost::KIND_TOO => 'СТ ТОО',
                     ]),
                 Filter::make('current')
                     ->label('Только действующие')

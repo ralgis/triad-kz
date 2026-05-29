@@ -57,7 +57,12 @@
                                     </span>
                                 @endif
 
-                                <span class="text-xs uppercase tracking-wide font-semibold {{ $gost->kind === \App\Models\Gost::KIND_GOST ? 'text-brand-600' : 'text-emerald-600' }}">
+                                <span @class([
+                                    'text-xs uppercase tracking-wide font-semibold',
+                                    'text-brand-600' => $gost->kind === \App\Models\Gost::KIND_GOST,
+                                    'text-emerald-600' => $gost->kind === \App\Models\Gost::KIND_SERIYA,
+                                    'text-amber-600' => $gost->kind === \App\Models\Gost::KIND_TOO,
+                                ])>
                                     {{ $gost->kindLabel() }}
                                 </span>
                             </div>

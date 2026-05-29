@@ -149,10 +149,12 @@
                     <div class="mb-3 flex flex-wrap gap-2">
                         @foreach($product->gosts as $g)
                             <a href="{{ $g->url() }}"
-                               class="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded
-                                      {{ $g->kind === \App\Models\Gost::KIND_GOST
-                                            ? 'bg-brand-50 text-brand-700 hover:bg-brand-100'
-                                            : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
+                               @class([
+                                   'inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded',
+                                   'bg-brand-50 text-brand-700 hover:bg-brand-100' => $g->kind === \App\Models\Gost::KIND_GOST,
+                                   'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' => $g->kind === \App\Models\Gost::KIND_SERIYA,
+                                   'bg-amber-50 text-amber-700 hover:bg-amber-100' => $g->kind === \App\Models\Gost::KIND_TOO,
+                               ])>
                                 {{ $g->fullLabel() }}
                             </a>
                         @endforeach

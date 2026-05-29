@@ -64,6 +64,7 @@ class ProductForm
                                 ->options([
                                     Gost::KIND_GOST => 'ГОСТ',
                                     Gost::KIND_SERIYA => 'Серия',
+                                    Gost::KIND_TOO => 'СТ ТОО',
                                 ])
                                 ->default(Gost::KIND_GOST)
                                 ->native(false),
@@ -72,7 +73,7 @@ class ProductForm
                                 ->required()
                                 ->maxLength(200)
                                 ->placeholder('8020-90')
-                                ->helperText('Приставка «ГОСТ»/«Серия» подставится автоматически по типу.'),
+                                ->helperText('Приставка «ГОСТ»/«Серия»/«СТ ТОО» подставится автоматически по типу.'),
                             TextInput::make('code')
                                 ->label('Цифровой код (опц.)')
                                 ->maxLength(100)

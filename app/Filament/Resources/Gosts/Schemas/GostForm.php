@@ -30,15 +30,16 @@ class GostForm
                         ->options([
                             Gost::KIND_GOST => 'ГОСТ',
                             Gost::KIND_SERIYA => 'Серия',
+                            Gost::KIND_TOO => 'СТ ТОО',
                         ])
                         ->default(Gost::KIND_GOST)
                         ->native(false)
                         ->live(),
 
-                    // Bare code/identifier only — the «ГОСТ»/«Серия»
-                    // prefix is reactive via ->prefix() based on the
-                    // kind field above. Stored value: «8020-90», not
-                    // «ГОСТ 8020-90».
+                    // Bare code/identifier only — the «ГОСТ»/«Серия»/
+                    // «СТ ТОО» prefix is reactive via ->prefix() based
+                    // on the kind field above. Stored value: «8020-90»,
+                    // not «ГОСТ 8020-90».
                     TextInput::make('label')
                         ->label('Номер стандарта')
                         ->required()
@@ -46,10 +47,11 @@ class GostForm
                         ->prefix(fn ($get) => match ($get('kind')) {
                             Gost::KIND_GOST => 'ГОСТ',
                             Gost::KIND_SERIYA => 'Серия',
+                            Gost::KIND_TOO => 'СТ ТОО',
                             default => null,
                         })
                         ->placeholder('8020-90')
-                        ->helperText('Без приставки «ГОСТ»/«Серия» — она подставится автоматически по типу.')
+                        ->helperText('Без приставки «ГОСТ»/«Серия»/«СТ ТОО» — она подставится автоматически по типу.')
                         ->live(onBlur: true)
                         ->afterStateUpdated(function ($state, $set, $get, ?Gost $record) {
                             if ($record === null && filled($state) && filled($get('kind'))) {

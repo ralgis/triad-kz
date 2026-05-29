@@ -28,16 +28,18 @@ final class GostMatcher
      * empty string if no such bullet is present.
      *
      * Tolerates either hyphen-minus or em-dash, optional trailing
-     * period, and arbitrary whitespace — these all show up in the
-     * legacy WP content.
+     * period, arbitrary whitespace, and nested HTML tags — the
+     * legacy WP content sometimes wraps the standard in <span>
+     * («<li>ГОСТ/Серия - <span class="st">СТ ТОО 40212232-03-2008</span>.</li>»),
+     * so the inner pattern is `.+?` (with /s) and we strip_tags after.
      */
     public static function extractGostLine(string $html): string
     {
-        if (! preg_match('#<li>\s*ГОСТ/Серия\s*[-—]\s*([^<]+?)\s*\.?\s*</li>#u', $html, $m)) {
+        if (! preg_match('#<li>\s*ГОСТ/Серия\s*[-—]\s*(.+?)\s*</li>#us', $html, $m)) {
             return '';
         }
 
-        return trim($m[1]);
+        return trim(strip_tags($m[1]), " \t\n\r\0\x0B.");
     }
 
     /**

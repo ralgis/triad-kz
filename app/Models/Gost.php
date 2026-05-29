@@ -44,6 +44,15 @@ class Gost extends Model implements HasPublicUrl
 
     public const KIND_SERIYA = 'seriya';
 
+    /**
+     * «СТ ТОО» — Стандарт Организации (Corporate Standard issued by
+     * a Kazakhstan LLP). Used when no profile ГОСТ / СТ РК exists for
+     * the product — the manufacturer writes their own standard
+     * (e.g. СТ ТОО 40212232-03-2008 by ТРИ АД Construction for арычные
+     * лотки).
+     */
+    public const KIND_TOO = 'too';
+
     protected $fillable = [
         'kind',
         'label',
@@ -145,14 +154,17 @@ class Gost extends Model implements HasPublicUrl
      */
     public function fullLabel(): string
     {
-        $prefix = $this->kind === self::KIND_GOST ? 'ГОСТ' : 'Серия';
-
-        return $prefix.' '.$this->label;
+        return $this->kindLabel().' '.$this->label;
     }
 
     public function kindLabel(): string
     {
-        return $this->kind === self::KIND_GOST ? 'ГОСТ' : 'Серия';
+        return match ($this->kind) {
+            self::KIND_GOST => 'ГОСТ',
+            self::KIND_SERIYA => 'Серия',
+            self::KIND_TOO => 'СТ ТОО',
+            default => '',
+        };
     }
 
     /**
