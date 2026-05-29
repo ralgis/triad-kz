@@ -205,7 +205,7 @@ class Product extends Model implements HasMedia, HasPublicUrl
      * pivot half-mirrored. Self-references are filtered out — a
      * product can't be its own complement.
      *
-     * @param  array<int|string>  $productIds
+     * @param array<int|string> $productIds
      */
     public function syncComplementarySymmetric(array $productIds): void
     {
@@ -243,7 +243,7 @@ class Product extends Model implements HasMedia, HasPublicUrl
      * other ids (used to dedupe against the complementary block on
      * the same detail page).
      *
-     * @param  array<int>  $exclude
+     * @param array<int> $exclude
      * @return Collection<int, Product>
      */
     public function relatedInCategory(int $limit = 6, array $exclude = []): Collection

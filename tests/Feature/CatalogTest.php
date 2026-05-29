@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Category;
+use App\Models\Gost;
 use App\Models\Product;
 
 it('renders catalog index with root categories only', function () {
@@ -56,8 +57,8 @@ it('shows product detail at nested URL', function () {
     $p = Product::factory()->create(['name' => 'КС10', 'slug' => 'ks-10']);
     $p->categories()->attach($cat);
 
-    $gost = \App\Models\Gost::create([
-        'kind' => \App\Models\Gost::KIND_GOST,
+    $gost = Gost::create([
+        'kind' => Gost::KIND_GOST,
         'label' => '8020-90',
         'slug' => 'gost-8020-90',
     ]);

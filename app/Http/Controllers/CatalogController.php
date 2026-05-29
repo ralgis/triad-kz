@@ -186,7 +186,7 @@ final class CatalogController extends Controller
     }
 
     /**
-     * @param  array{numeric: array<string, array{label:string,unit:string,step:float,min:int|float,max:int|float}>, grades: array<int, string>}  $meta
+     * @param array{numeric: array<string, array{label:string,unit:string,step:float,min:int|float,max:int|float}>, grades: array<int, string>} $meta
      */
     private function applyFilters(BelongsToMany $query, Request $request, array $meta): void
     {
@@ -247,7 +247,7 @@ final class CatalogController extends Controller
      * Build a flat «(label, value)» list of active filter chips so
      * the view can render them with X-to-remove links.
      *
-     * @param  array{numeric: array<string, array{label:string,unit:string,step:float,min:int|float,max:int|float}>, grades: array<int, string>}  $meta
+     * @param array{numeric: array<string, array{label:string,unit:string,step:float,min:int|float,max:int|float}>, grades: array<int, string>} $meta
      * @return list<array{key:string, label:string}>
      */
     private function summarizeActive(Request $request, array $meta): array

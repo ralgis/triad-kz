@@ -117,7 +117,7 @@ final class ExtractProductSpecs extends Command
      * Unknown labels are accumulated in $unknownLabels so the CLI can
      * report them — extending LABEL_MAP later is the right cure.
      *
-     * @param  array<int, string>  &$unknownLabels  accumulator
+     * @param array<int, string> &$unknownLabels accumulator
      * @return array<string, int|float|string>
      */
     private function extractSpecs(string $html, array &$unknownLabels): array
@@ -180,8 +180,7 @@ final class ExtractProductSpecs extends Command
             'concrete_grade' => $clean,
 
             'length_mm', 'width_mm', 'height_mm', 'thickness_mm',
-            'inner_diameter_mm', 'outer_diameter_mm', 'plate_diameter_mm', 'hole_diameter_mm',
-                => is_numeric($clean) ? (int) round((float) $clean) : null,
+            'inner_diameter_mm', 'outer_diameter_mm', 'plate_diameter_mm', 'hole_diameter_mm', => is_numeric($clean) ? (int) round((float) $clean) : null,
 
             'concrete_volume_m3' => is_numeric($clean) ? (float) $clean : null,
 

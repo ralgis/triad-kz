@@ -52,7 +52,7 @@ final class GostMatcher
      * «3.006.1-2.87 Выпуск N») normalize through a small alias map
      * and «Выпуск N»-suffix stripping.
      *
-     * @param  Collection<string, Gost>  $gostsByCode  keyed by `code`
+     * @param Collection<string, Gost> $gostsByCode keyed by `code`
      * @return array<int>
      */
     public static function matchGostIds(string $rawLine, Collection $gostsByCode): array
