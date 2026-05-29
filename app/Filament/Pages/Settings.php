@@ -8,6 +8,7 @@ use App\Models\Setting;
 use BackedEnum;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -145,9 +146,12 @@ class Settings extends Page implements HasForms
                                         ->schema([
                                             Repeater::make('working_hours')
                                                 ->hiddenLabel()
-                                                ->columns(3)
+                                                ->columns(4)
                                                 ->schema([
                                                     Hidden::make('day'),
+                                                    Placeholder::make('day_label')
+                                                        ->hiddenLabel()
+                                                        ->content(fn ($get): string => Setting::DAYS[$get('day')] ?? '?'),
                                                     Toggle::make('is_open')
                                                         ->label('Работаем')
                                                         ->inline(false)
@@ -167,8 +171,10 @@ class Settings extends Page implements HasForms
                                                 ->default(self::defaultWorkingHours())
                                                 ->addable(false)
                                                 ->deletable(false)
-                                                ->reorderable(false)
-                                                ->itemLabel(fn (array $state): ?string => Setting::DAYS[$state['day'] ?? ''] ?? null),
+                                                ->reorderable(false),
+                                            // itemLabel intentionally not set — the Placeholder
+                                            // inside the row carries the day name now, so the
+                                            // collapsible header bar is unnecessary chrome.
                                         ]),
 
                                     Section::make('Особые дни')

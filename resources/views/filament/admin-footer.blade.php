@@ -51,7 +51,17 @@
            rel="noopener"
            class="inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200">
             Открыть сайт
-            <svg xmlns="http://www.w3.org/2000/svg" class="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            {{--
+                Width/height as HTML attributes — `size-3.5` Tailwind
+                utility isn't in Filament's pre-built admin CSS, so the
+                SVG was rendering at viewport intrinsic size (the giant
+                arrow user reported). Native attributes guarantee size
+                regardless of which utility classes are available.
+            --}}
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="14" height="14"
+                 fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M14 3h7m0 0v7m0-7l-9 9M5 5v14h14"/>
             </svg>
         </a>
