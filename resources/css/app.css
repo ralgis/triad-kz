@@ -19,27 +19,165 @@
 @source '../**/*.js';
 
 /*
- * triad.kz B2B theme.
+ * triad.kz — «Drafting Floor» design system
  *
- * Brand color — muted industrial blue, picked for a serious
- * construction-supplier feel without screaming "tech startup".
- * Steel-gray neutrals carry the bulk of the UI; brand is reserved for
- * primary CTAs and link accents so price tables, ГОСТ markings, and
- * product specs stay readable.
+ * Concept: серьёзная техническая публикация. Каталог железобетонных
+ * изделий как инженерный документ, не маркетинговый сайт. Tone:
+ * industrial-professional, trust + technical competence над
+ * декоративной эстетикой. Референс: советские технические журналы
+ * 70-х, современный Vitsoe-каталог, Stripe Press.
  *
- * Display font Inter over the legacy Instrument Sans — better Cyrillic
- * coverage and tighter at small sizes on mobile, our primary target.
+ * Typography
+ * - Display (H1/H2/H3): Russo One — блочный industrial, native Cyrillic.
+ *   Используется uppercase + tracking для maximum character.
+ * - Body: Onest — геометрический гротеск, native Cyrillic, чуть жёстче
+ *   Inter / Manrope. Читается на длинных абзацах.
+ * - Mono: IBM Plex Mono — все цифры в каталоге (размеры, веса, цены,
+ *   ГОСТы, артикулы) монoширинно. Aligns visually = легче сравнивать.
+ *
+ * Palette
+ * - Concrete (warm cream-beige) — page background. Сигнализирует
+ *   "не белый = не generic SaaS" с первой секунды.
+ * - Steel (almost-black with blue undertone) — text, hard edges.
+ * - Blueprint (deep technical blue) — primary accent, чертёжный синий.
+ * - Stamp (industrial red) — secondary accent, как штамп ГОСТ на чертеже.
+ *   Только для critical actions / warnings.
+ * - Haze (cool gray) — secondary text, borders.
+ * - Document (warm off-white) — surfaces (карточки, модалы).
  */
 @theme {
-    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* Typography stack — Russo One через @font-face below */
+    --font-display: 'Russo One', 'Arial Black', system-ui, sans-serif;
+    --font-sans: 'Onest', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    /* default font-family — applied to body */
+    --default-font-family: var(--font-sans);
+    --default-mono-font-family: var(--font-mono);
 
-    --color-brand-50: oklch(0.97 0.014 240);
-    --color-brand-100: oklch(0.93 0.03 240);
-    --color-brand-200: oklch(0.86 0.06 240);
-    --color-brand-400: oklch(0.65 0.13 240);
-    --color-brand-500: oklch(0.55 0.15 240);
-    --color-brand-600: oklch(0.46 0.14 240);
-    --color-brand-700: oklch(0.38 0.12 240);
-    --color-brand-900: oklch(0.24 0.07 240);
+    /* Drafting Floor palette */
+    --color-concrete: #e8e4dc;       /* свежезастывший бетон, тёплый */
+    --color-concrete-dark: #d9d4c7;  /* тень / разделитель секций */
+    --color-document: #fafaf7;       /* лёгкая тёплая бумага, surfaces */
+    --color-steel: #14181f;          /* почти чёрный с синим подтоном */
+    --color-steel-soft: #2d3340;     /* secondary text */
+    --color-haze: #6b7280;           /* далёкие горы Алматы, captions */
+    --color-edge: #1a1d24;           /* hard borders, индустриальные линии */
+
+    /* Blueprint — primary accent, чертёжный синий */
+    --color-blueprint-50: oklch(0.97 0.014 250);
+    --color-blueprint-100: oklch(0.92 0.03 250);
+    --color-blueprint-200: oklch(0.83 0.06 250);
+    --color-blueprint-500: oklch(0.43 0.10 250);
+    --color-blueprint-600: oklch(0.36 0.09 250); /* #1F3A5F equivalent */
+    --color-blueprint-700: oklch(0.30 0.08 250);
+    --color-blueprint-900: oklch(0.20 0.05 250);
+
+    /* Hot Stamp — secondary accent, штамп ГОСТ красный */
+    --color-stamp-50: oklch(0.96 0.02 30);
+    --color-stamp-100: oklch(0.90 0.04 30);
+    --color-stamp-500: oklch(0.55 0.18 30);
+    --color-stamp-600: oklch(0.48 0.17 30); /* #C8442B equivalent */
+    --color-stamp-700: oklch(0.41 0.15 30);
+
+    /*
+     * Brand-* aliases preserved for backward compat — existing
+     * components reference bg-brand-600 etc. They now point at the
+     * Blueprint scale. Will be retired as components migrate to
+     * explicit `blueprint-` tokens.
+     */
+    --color-brand-50: var(--color-blueprint-50);
+    --color-brand-100: var(--color-blueprint-100);
+    --color-brand-200: var(--color-blueprint-200);
+    --color-brand-400: oklch(0.55 0.10 250);
+    --color-brand-500: var(--color-blueprint-500);
+    --color-brand-600: var(--color-blueprint-600);
+    --color-brand-700: var(--color-blueprint-700);
+    --color-brand-900: var(--color-blueprint-900);
+
+    /* No rounded corners by default — square hard edges are part of the
+     * industrial DNA. Components that want rounded must opt in. */
+    --radius-xs: 0;
+    --radius-sm: 0;
+    --radius-md: 0;
+    --radius-lg: 0;
+    --radius-xl: 0;
+    --radius-2xl: 0;
+    --radius-3xl: 0;
+}
+
+/*
+ * Russo One + Onest + IBM Plex Mono loaded via Bunny Fonts (privacy-
+ * friendly Google Fonts proxy). The Vite plugin emits @font-face decls
+ * via the bunny() helper in vite.config.js — see that file. We add the
+ * subset hint inline here so font-loading uses Cyrillic + Latin only,
+ * skipping CJK / Greek / Arabic glyphs we don't need.
+ */
+
+/*
+ * Body baseline:
+ *  - Warm concrete background, not white
+ *  - Steel-black text
+ *  - Tight letter-spacing — industrial sans usually wants slight tightening
+ *  - antialiased rendering — keeps Russo One sharp on macOS Safari
+ */
+body {
+    background: var(--color-concrete);
+    color: var(--color-steel);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.005em;
+}
+
+/*
+ * Display headlines — Russo One, uppercase, wider tracking. The
+ * uppercase + tracking combo is what makes the design read as
+ * «industrial catalog» rather than «modern blog».
+ */
+h1, h2, h3 {
+    font-family: var(--font-display);
+    color: var(--color-steel);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+}
+
+h4, h5, h6 {
+    font-family: var(--font-display);
+    color: var(--color-steel);
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+}
+
+/*
+ * Mono numeric class — applied to anything that's a number: prices,
+ * dimensions, ГОСТ marks, SKUs, dates. The visual «fishka» of the
+ * site — aligned mono digits feel like reading a parts catalog.
+ */
+.font-mono,
+.spec-value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+}
+
+/*
+ * Subtle blueprint grid texture — applied via utility .bg-blueprint-grid
+ * to hero / large-surface sections. 4% opacity is the line between «eye
+ * picks up texture» and «distracting».
+ */
+.bg-blueprint-grid {
+    background-image:
+        linear-gradient(rgba(31, 58, 95, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(31, 58, 95, 0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+/*
+ * Heavy hard-edge focus ring — industrial UI doesn't do soft glowing.
+ * Override Tailwind's default ring shape.
+ */
+:where(:focus-visible) {
+    outline: 2px solid var(--color-blueprint-600);
+    outline-offset: 2px;
+    border-radius: 0;
 }

@@ -4,23 +4,43 @@
     'type' => 'submit',
     'href' => null,
 ])
+{{--
+    Drafting Floor button primitive.
+
+    Variants:
+    - primary   : Blueprint-blue solid. Default action (B корзину, Запрос
+                  цены). Heavy weight + tracking for industrial feel.
+    - stamp     : Hot-stamp red. CRITICAL action only — order confirm,
+                  delete. Should be rare on the page (1 max).
+    - outline   : Bordered, transparent fill. Secondary actions.
+    - ghost     : Text-only with hover wash. Tertiary / cancel.
+    - mono      : IBM Plex Mono, uppercase. For technical / catalog
+                  navigation («КАТАЛОГ →», «38 SKU»). NOT for body CTAs.
+
+    Sizes set both padding and the tracking — bigger = tighter
+    because Russo One / mono behave differently at scale.
+--}}
 @php
-    $base = 'inline-flex items-center justify-center gap-2 font-medium rounded
-             focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
-             transition disabled:opacity-50 disabled:cursor-not-allowed';
+    /* SQUARE edges, no rounded — industrial DNA. Border 2px when
+       outline / stamp for hard-edge industrial feel. focus-visible
+       handled globally in app.css. */
+    $base = 'inline-flex items-center justify-center gap-2 font-medium
+             uppercase tracking-wider transition
+             disabled:opacity-50 disabled:cursor-not-allowed
+             border-2 border-transparent';
 
     $variants = [
-        'primary' => 'bg-brand-600 text-white hover:bg-brand-700 focus-visible:ring-brand-600',
-        'secondary' => 'bg-slate-100 text-slate-800 hover:bg-slate-200 focus-visible:ring-slate-600',
-        'outline' => 'border border-slate-300 text-slate-800 hover:bg-slate-50 focus-visible:ring-brand-600',
-        'ghost' => 'text-brand-600 hover:bg-brand-50 focus-visible:ring-brand-600',
-        'danger' => 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600',
+        'primary' => 'bg-blueprint-600 text-document hover:bg-blueprint-700',
+        'stamp' => 'bg-stamp-600 text-document hover:bg-stamp-700',
+        'outline' => 'border-steel text-steel hover:bg-steel hover:text-document',
+        'ghost' => 'text-blueprint-600 hover:bg-blueprint-50',
+        'mono' => 'font-mono text-steel hover:text-blueprint-600 border-b border-steel hover:border-blueprint-600 border-x-0 border-t-0 px-0',
     ];
 
     $sizes = [
-        'sm' => 'px-3 py-1.5 text-sm',
-        'md' => 'px-5 py-2.5 text-base',
-        'lg' => 'px-6 py-3 text-base',
+        'sm' => 'px-4 py-2 text-xs',
+        'md' => 'px-6 py-3 text-sm',
+        'lg' => 'px-8 py-4 text-sm',
     ];
 
     $classes = trim($base.' '.($variants[$variant] ?? $variants['primary']).' '.($sizes[$size] ?? $sizes['md']));

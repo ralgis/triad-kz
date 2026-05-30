@@ -80,6 +80,11 @@ Route::get('/{key}.txt', IndexNowKeyController::class)
     ->where('key', '[a-zA-Z0-9-]{8,128}')
     ->name('indexnow.key');
 
+// Design preview — temporary, для проверки направления Drafting Floor
+// design system на реальной браузерной странице. Удалим когда design
+// будет approved и применён в основных view'ах.
+Route::get('/design-preview', fn () => view('design-preview'))->name('design.preview');
+
 // Catch-all for content pages (about / gosts / payment / ...). MUST be
 // last — Laravel matches top-down and {page:slug} would otherwise
 // shadow every other GET above. Constrained to kebab-case so /robots.txt
