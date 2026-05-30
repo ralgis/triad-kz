@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Article;
+use App\Models\BlogCategory;
+use App\Services\ContentToc;
 use Illuminate\View\View;
 
 final class BlogController extends Controller
@@ -13,23 +15,60 @@ final class BlogController extends Controller
     {
         $articles = Article::query()
             ->published()
+            ->with('blogCategory')
             ->latest('published_at')
             ->paginate(12);
 
-        return view('blog.index', compact('articles'));
+        // Sidebar — rubrics with article counts for the listed/published set.
+        // Eagerly loaded into the index view so layout doesn't N+1.
+        $categories = BlogCategory::query()
+            ->published()
+            ->listed()
+            ->withCount(['articles' => fn ($q) => $q->published()])
+            ->orderBy('order')
+            ->get();
+
+        return view('blog.index', compact('articles', 'categories'));
     }
 
-    public function show(Article $article): View
+    /**
+     * Article detail. Fans out into ContentToc + related-block + breadcrumb
+     * trail (including the rubric when present). The exists() re-check
+     * through scopePublished is the single source of truth for "visible";
+     * router model binding alone doesn't enforce the future-date scope.
+     */
+    public function show(Article $article, ContentToc $toc): View
     {
-        // scopePublished is the source of truth for "visible" (not-null
-        // published_at AND not in the future); re-querying through it
-        // here keeps that check in one place and stays in sync if the
-        // visibility rule ever grows a third clause.
         abort_unless(
             Article::published()->whereKey($article->id)->exists(),
             404,
         );
 
-        return view('blog.article', compact('article'));
+        $article->load('blogCategory');
+
+        $tocItems = $toc->extract($article->content ?? '');
+        $contentWithAnchors = $toc->injectIds($article->content ?? '');
+
+        $related = $article->relatedInBlogCategory(limit: 4);
+
+        return view('blog.article', [
+            'article' => $article,
+            'tocItems' => $tocItems,
+            'contentHtml' => $contentWithAnchors,
+            'related' => $related,
+        ]);
+    }
+
+    public function category(BlogCategory $category): View
+    {
+        abort_unless($category->published, 404);
+
+        $articles = Article::query()
+            ->published()
+            ->where('blog_category_id', $category->id)
+            ->latest('published_at')
+            ->paginate(12);
+
+        return view('blog.category', compact('category', 'articles'));
     }
 }

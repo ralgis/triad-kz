@@ -27,6 +27,10 @@
         : array_filter([
             '@context' => 'https://schema.org',
             '@type' => 'Organization',
+            // @id is the linchpin of the schema graph — Article.author /
+            // Article.publisher / Product.brand all point here. Without
+            // it Google won't dedup the entity references.
+            '@id' => url('/').'/#organization',
             'name' => $settings->site_name,
             'url' => url('/'),
             'logo' => $settings->getFirstMediaUrl('logo') ?: null,
