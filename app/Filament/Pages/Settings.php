@@ -104,9 +104,23 @@ class Settings extends Page implements HasForms
                             ->schema([
                                 Section::make()->columns(2)->schema([
                                     TextInput::make('phone')->label('Телефон основной'),
+                                    Toggle::make('phone_has_whatsapp')
+                                        ->label('Есть WhatsApp на этом номере')
+                                        ->inline(false)
+                                        ->helperText('Покажет кнопку «WhatsApp» рядом со звонком.'),
                                     TextInput::make('phone_secondary')->label('Телефон 2'),
+                                    Toggle::make('phone_secondary_has_whatsapp')
+                                        ->label('Есть WhatsApp на этом номере')
+                                        ->inline(false),
                                     TextInput::make('phone_tertiary')->label('Телефон 3'),
+                                    Toggle::make('phone_tertiary_has_whatsapp')
+                                        ->label('Есть WhatsApp на этом номере')
+                                        ->inline(false),
                                     TextInput::make('fax')->label('Факс'),
+                                    TextInput::make('telegram_handle')
+                                        ->label('Telegram username')
+                                        ->placeholder('@triadkz_sales')
+                                        ->helperText('С @ или без — сами почистим. Появится кнопка «Написать в Telegram».'),
                                     TextInput::make('public_email')
                                         ->label('Email публичный')
                                         ->email(),

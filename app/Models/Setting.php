@@ -58,8 +58,11 @@ class Setting extends Model implements HasMedia
         'site_name',
         'site_tagline',
         'phone',
+        'phone_has_whatsapp',
         'phone_secondary',
+        'phone_secondary_has_whatsapp',
         'phone_tertiary',
+        'phone_tertiary_has_whatsapp',
         'fax',
         'public_email',
         'email_recipient',
@@ -70,6 +73,7 @@ class Setting extends Model implements HasMedia
         'working_hours',
         'special_days',
         'skype',
+        'telegram_handle',
         'map_lat',
         'map_lng',
         'company_legal_name',
@@ -99,6 +103,9 @@ class Setting extends Model implements HasMedia
             'working_hours' => 'array',
             'special_days' => 'array',
             'analytics_enabled' => 'boolean',
+            'phone_has_whatsapp' => 'boolean',
+            'phone_secondary_has_whatsapp' => 'boolean',
+            'phone_tertiary_has_whatsapp' => 'boolean',
             // Yandex Metrika OAuth token is sensitive — encrypted at
             // rest. Decryption is transparent on attribute access.
             'yandex_metrika_oauth_token' => 'encrypted',
@@ -154,6 +161,62 @@ class Setting extends Model implements HasMedia
         // nonOptimized() — see Product::registerMediaConversions() for context.
         $this->addMediaConversion('header')->width(200)->height(80)->nonOptimized();
         $this->addMediaConversion('invoice')->width(400)->height(160)->nonOptimized();
+    }
+
+    // ---- Messenger helpers ----
+
+    /**
+     * Список телефонов с включённым WhatsApp в порядке primary →
+     * secondary → tertiary. Каждый элемент имеет ['phone' =>
+     * '+7 727 ...', 'wa_url' => 'https://wa.me/77270000000'].
+     *
+     * wa.me требует номер БЕЗ + и БЕЗ форматирующих символов — мы
+     * чистим всё что не цифра, чтобы admin мог ввести номер любым
+     * привычным форматом («+7 (727) 000-00-00»).
+     *
+     * @return list<array{phone:string, wa_url:string}>
+     */
+    public function whatsappNumbers(): array
+    {
+        $candidates = [
+            ['phone' => $this->phone, 'has_wa' => $this->phone_has_whatsapp],
+            ['phone' => $this->phone_secondary, 'has_wa' => $this->phone_secondary_has_whatsapp],
+            ['phone' => $this->phone_tertiary, 'has_wa' => $this->phone_tertiary_has_whatsapp],
+        ];
+
+        $out = [];
+        foreach ($candidates as $c) {
+            if (! $c['has_wa'] || empty($c['phone'])) {
+                continue;
+            }
+            $digits = preg_replace('/\D+/', '', (string) $c['phone']);
+            if ($digits === null || $digits === '') {
+                continue;
+            }
+            $out[] = [
+                'phone' => $c['phone'],
+                'wa_url' => 'https://wa.me/'.$digits,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Telegram URL из handle (@triadkz_sales → https://t.me/triadkz_sales).
+     * Возвращает null если handle не задан. Поддерживает оба формата
+     * ввода — с @ и без — потому что одни админы привыкли с @, другие
+     * нет.
+     */
+    public function telegramUrl(): ?string
+    {
+        $handle = $this->telegram_handle;
+        if (empty($handle)) {
+            return null;
+        }
+        $clean = ltrim((string) $handle, '@');
+
+        return $clean === '' ? null : 'https://t.me/'.$clean;
     }
 
     // ---- Working-hours helpers ----
