@@ -29,7 +29,10 @@ class ArticleForm
                 ->schema([
                     Select::make('blog_category_id')
                         ->label('Рубрика')
-                        ->relationship('blogCategory', 'name', fn ($q) => $q->where('published', true))
+                        // Closure param MUST be named $query — Filament's
+                        // EvaluatesClosures injects by name from the
+                        // ['query' => $builder, 'search' => ...] bag.
+                        ->relationship('blogCategory', 'name', fn ($query) => $query->where('published', true))
                         ->searchable()
                         ->preload()
                         ->required()
@@ -114,7 +117,7 @@ class ArticleForm
 
                     Select::make('pillar_id')
                         ->label('Pillar этой статьи')
-                        ->relationship('pillar', 'title', fn ($q, ?Article $record) => $q
+                        ->relationship('pillar', 'title', fn ($query, ?Article $record) => $query
                             ->where('is_pillar', true)
                             ->when($record, fn ($q) => $q->whereKeyNot($record->id)))
                         ->searchable()
