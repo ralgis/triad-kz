@@ -75,27 +75,86 @@
                 </div>
             </div>
 
-            <aside class="lg:col-span-4 bg-document border-2 border-edge p-5 sm:p-6 self-start">
-                <p class="font-display uppercase tracking-wider text-xs text-haze mb-4">
-                    Тех. сводка
-                </p>
-                <dl class="space-y-3 font-mono text-sm">
-                    <div class="flex justify-between border-b border-concrete-dark pb-2">
-                        <dt class="text-haze">SKU</dt><dd class="spec-value">38</dd>
+            {{--
+                Contact card — primary B2B-ЖБИ conversion path. The phone
+                number is the load-bearing element: large mono, tappable
+                tel: link, touch target >= 44px. Manager byline adds the
+                human face (B2B trust). Messengers + email below for the
+                «I'd rather text first» segment. Final CTA «Получить прайс»
+                is the highest-conversion ask (PDF download via lead form).
+
+                All copy here is PLACEHOLDER — actual values land from
+                Settings (phone / public_email / working_hours / etc.)
+                when this gets wired into the real hero in Phase D.
+            --}}
+            <aside class="lg:col-span-4 bg-document border-2 border-edge self-start">
+                {{-- Header strip --}}
+                <div class="bg-steel text-document px-5 sm:px-6 py-3 flex items-center justify-between">
+                    <p class="font-display uppercase tracking-wider text-xs sm:text-sm">
+                        Отдел продаж
+                    </p>
+                    <span class="font-mono text-[10px] sm:text-xs text-haze uppercase">ONLINE</span>
+                </div>
+
+                {{-- Phone — the load-bearing element. Crazy big mono,
+                     tappable tel: link, hover changes to blueprint. --}}
+                <a href="tel:+77270000000"
+                   class="block px-5 sm:px-6 py-5 border-b-2 border-concrete-dark hover:bg-concrete transition group">
+                    <p class="font-mono text-[10px] text-haze uppercase tracking-wider mb-1">Прямой телефон</p>
+                    <p class="font-mono text-xl sm:text-2xl text-steel group-hover:text-blueprint-600 transition spec-value leading-tight">
+                        +7 727 000-00-00
+                    </p>
+                </a>
+
+                {{-- Manager byline — adds human face to a B2B contact --}}
+                <div class="px-5 sm:px-6 py-4 border-b-2 border-concrete-dark">
+                    <p class="font-mono text-[10px] text-haze uppercase tracking-wider mb-2">Менеджер</p>
+                    <p class="font-display uppercase text-sm">Алексей Алексеев</p>
+                    <p class="text-xs text-steel-soft mt-0.5">начальник отдела продаж</p>
+                </div>
+
+                {{-- Hours --}}
+                <div class="px-5 sm:px-6 py-4 border-b-2 border-concrete-dark">
+                    <p class="font-mono text-[10px] text-haze uppercase tracking-wider mb-2">Часы работы</p>
+                    <dl class="space-y-1 font-mono text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-haze">ПН—ПТ</dt><dd class="spec-value">09:00 — 18:00</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-haze">СБ</dt><dd class="spec-value">10:00 — 15:00</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-haze">ВС</dt><dd class="text-haze">выходной</dd>
+                        </div>
+                    </dl>
+                </div>
+
+                {{-- Messengers + email — quick-reach options --}}
+                <div class="px-5 sm:px-6 py-4 border-b-2 border-concrete-dark">
+                    <p class="font-mono text-[10px] text-haze uppercase tracking-wider mb-3">Написать</p>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="https://t.me/triadkz_sales"
+                           class="inline-flex items-center gap-2 px-3 py-2 border-2 border-edge font-mono text-xs uppercase tracking-wider hover:bg-blueprint-600 hover:text-document hover:border-blueprint-600 transition">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+                            Telegram
+                        </a>
+                        <a href="https://wa.me/77270000000"
+                           class="inline-flex items-center gap-2 px-3 py-2 border-2 border-edge font-mono text-xs uppercase tracking-wider hover:bg-blueprint-600 hover:text-document hover:border-blueprint-600 transition">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                            WhatsApp
+                        </a>
                     </div>
-                    <div class="flex justify-between border-b border-concrete-dark pb-2">
-                        <dt class="text-haze">Категорий</dt><dd class="spec-value">9</dd>
-                    </div>
-                    <div class="flex justify-between border-b border-concrete-dark pb-2">
-                        <dt class="text-haze">ГОСТов</dt><dd class="spec-value">7</dd>
-                    </div>
-                    <div class="flex justify-between border-b border-concrete-dark pb-2">
-                        <dt class="text-haze">Доставка</dt><dd class="text-steel">по РК</dd>
-                    </div>
-                    <div class="flex justify-between">
-                        <dt class="text-haze">Самовывоз</dt><dd class="text-steel">Алматы</dd>
-                    </div>
-                </dl>
+                    <a href="mailto:sales@triadkz.kz"
+                       class="block mt-3 font-mono text-xs text-blueprint-600 hover:text-blueprint-700 hover:underline">
+                        sales@triadkz.kz
+                    </a>
+                </div>
+
+                {{-- Final CTA — the high-converting ask for B2B-ЖБИ --}}
+                <a href="#"
+                   class="block bg-stamp-600 text-document hover:bg-stamp-700 transition px-5 sm:px-6 py-4 text-center font-display uppercase tracking-wider text-sm">
+                    Получить прайс →
+                </a>
             </aside>
         </div>
     </section>
