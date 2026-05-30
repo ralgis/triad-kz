@@ -69,9 +69,8 @@
                     плиты перекрытия, опорные подушки, арычные лотки.
                     ГОСТ. Серии. Сертификация.
                 </p>
-                <div class="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <div class="mt-8 sm:mt-10">
                     <x-button variant="primary" size="lg" href="#" class="w-full sm:w-auto">Каталог →</x-button>
-                    <x-button variant="outline" size="lg" href="#" class="w-full sm:w-auto">Запрос цены</x-button>
                 </div>
             </div>
 
@@ -172,9 +171,9 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             @foreach([
-                ['sku' => 'КС10.9', 'name' => 'Бетонное кольцо стеновое', 'dia' => '1000 × 890 мм', 'weight' => '0.85 т', 'volume' => '0.685 м³', 'price' => '12 500'],
-                ['sku' => 'КС15.9', 'name' => 'Бетонное кольцо стеновое', 'dia' => '1500 × 890 мм', 'weight' => '1.45 т', 'volume' => '1.156 м³', 'price' => '21 800'],
-                ['sku' => 'КС20.9', 'name' => 'Бетонное кольцо стеновое', 'dia' => '2000 × 890 мм', 'weight' => '2.15 т', 'volume' => '1.720 м³', 'price' => '33 400'],
+                ['sku' => 'КС10.9', 'name' => 'Бетонное кольцо стеновое', 'dia' => '1000 × 890 мм', 'weight' => '0.85 т', 'volume' => '0.685 м³', 'price' => '12 500', 'fresh' => 'сегодня'],
+                ['sku' => 'КС15.9', 'name' => 'Бетонное кольцо стеновое', 'dia' => '1500 × 890 мм', 'weight' => '1.45 т', 'volume' => '1.156 м³', 'price' => '21 800', 'fresh' => '3 дн. назад'],
+                ['sku' => 'КС20.9', 'name' => 'Бетонное кольцо стеновое', 'dia' => '2000 × 890 мм', 'weight' => '2.15 т', 'volume' => '1.720 м³', 'price' => '33 400', 'fresh' => '2 нед. назад'],
             ] as $p)
                 <article class="bg-document border-2 border-edge group hover:translate-y-[-2px] transition">
                     <div class="aspect-square bg-concrete-dark border-b-2 border-edge flex items-center justify-center text-haze relative">
@@ -199,12 +198,21 @@
                             </div>
                         </dl>
 
-                        <div class="mt-5 pt-4 border-t-2 border-concrete-dark flex items-baseline justify-between gap-2">
-                            <p class="font-mono text-base sm:text-lg text-steel">
-                                <span class="spec-value">{{ $p['price'] }}</span>
-                                <span class="text-xs text-haze">₸ /шт</span>
+                        <div class="mt-5 pt-4 border-t-2 border-concrete-dark">
+                            <div class="flex items-baseline justify-between gap-2">
+                                <p class="font-mono text-base sm:text-lg text-steel">
+                                    <span class="spec-value">{{ $p['price'] }}</span>
+                                    <span class="text-xs text-haze">₸ /шт</span>
+                                </p>
+                                <x-button variant="primary" size="sm" href="#">В корзину</x-button>
+                            </div>
+                            {{-- Freshness badge — small mono uppercase under the
+                                 price. Shows trust signal that the price is
+                                 actually maintained, not stale from 2018. --}}
+                            <p class="mt-2 font-mono text-[10px] text-haze uppercase tracking-wider flex items-center gap-1">
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l4.243 4.243L19 6.515"/></svg>
+                                Цена актуальна · {{ $p['fresh'] }}
                             </p>
-                            <x-button variant="primary" size="sm" href="#">В корзину</x-button>
                         </div>
                     </div>
                 </article>

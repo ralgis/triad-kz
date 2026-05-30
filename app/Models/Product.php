@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -55,6 +56,7 @@ class Product extends Model implements HasMedia, HasPublicUrl
         'price',
         'price_unit',
         'price_visible',
+        'price_updated_at',
         'unit_for_order',
         'description',
         'published',
@@ -88,6 +90,7 @@ class Product extends Model implements HasMedia, HasPublicUrl
             'mesh_cell_width_mm' => 'integer',
             'price' => 'decimal:2',
             'price_visible' => 'boolean',
+            'price_updated_at' => 'datetime',
             'published' => 'boolean',
             'featured' => 'boolean',
             'in_stock' => 'boolean',
@@ -247,6 +250,61 @@ class Product extends Model implements HasMedia, HasPublicUrl
         }
 
         return ($l ?: $w).' мм';
+    }
+
+    protected static function booted(): void
+    {
+        // Auto-stamp price_updated_at whenever the price actually changes.
+        // Triggers on the saving event so the new value lands before
+        // the row is persisted. NOT triggered by other field edits —
+        // we want the timestamp to reflect when the price moved, not
+        // when the description got fixed.
+        static::saving(function (Product $product): void {
+            if ($product->isDirty('price')) {
+                // @phpstan-ignore-next-line assign.propertyType — runtime cast is datetime, larastan stub sees string
+                $product->price_updated_at = now();
+            }
+        });
+    }
+
+    /**
+     * Human-readable freshness label for the catalog UI:
+     *
+     *   < 24 ч       → «сегодня»
+     *   < 7 дней     → «N дн. назад»
+     *   < 30 дней    → «N нед. назад»
+     *   < 365 дней   → «DD MMM» (например «27 мая»)
+     *   ≥ 365 дней   → «DD MMM YYYY»
+     *
+     * Returns null if price_updated_at is missing — the card hides
+     * the freshness badge instead of showing a fake date.
+     */
+    public function priceFreshnessLabel(): ?string
+    {
+        /** @var Carbon|null $when */
+        $when = $this->price_updated_at;
+        if ($when === null) {
+            return null;
+        }
+
+        $now = now();
+        $diffHours = $now->diffInHours($when);
+        if ($diffHours < 24) {
+            return 'сегодня';
+        }
+
+        $diffDays = (int) $now->diffInDays($when);
+        if ($diffDays < 7) {
+            return $diffDays.' дн. назад';
+        }
+        if ($diffDays < 30) {
+            return (int) floor($diffDays / 7).' нед. назад';
+        }
+        if ($diffDays < 365) {
+            return $when->translatedFormat('j M');
+        }
+
+        return $when->translatedFormat('j M Y');
     }
 
     public function getSlugOptions(): SlugOptions
