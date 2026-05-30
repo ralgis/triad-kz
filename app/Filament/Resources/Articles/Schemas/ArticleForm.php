@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Articles\Schemas;
 
+use App\Enums\ArticleType;
 use App\Filament\Components\SeoSection;
 use App\Models\Article;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
@@ -30,8 +33,16 @@ class ArticleForm
                         ->searchable()
                         ->preload()
                         ->required()
-                        ->helperText('Рубрика-хаб. Используется в breadcrumb, related-блоке и CollectionPage schema.')
-                        ->columnSpanFull(),
+                        ->helperText('Рубрика-хаб. Используется в breadcrumb, related-блоке и CollectionPage schema.'),
+
+                    Select::make('article_type')
+                        ->label('Тип статьи')
+                        ->options(collect(ArticleType::cases())->mapWithKeys(
+                            fn (ArticleType $t) => [$t->value => $t->label()],
+                        ))
+                        ->default(ArticleType::Guide->value)
+                        ->required()
+                        ->helperText('Драйвит render-логику (FAQ-блок, HowTo schema, сортировку).'),
 
                     TextInput::make('title')
                         ->label('Заголовок (H1)')
@@ -91,6 +102,101 @@ class ArticleForm
                         ->columnSpanFull(),
                 ]),
 
+            Section::make('Topic cluster (pillar/спутник)')
+                ->description('Pillar = главная статья темы. Cluster = спутник, ссылается на pillar.')
+                ->collapsed()
+                ->columns(2)
+                ->schema([
+                    Toggle::make('is_pillar')
+                        ->label('Это pillar-статья')
+                        ->helperText('Если включено, эта статья — pillar. На странице будет авто-блок «В этой теме» со списком всех cluster-статей.')
+                        ->inline(false),
+
+                    Select::make('pillar_id')
+                        ->label('Pillar этой статьи')
+                        ->relationship('pillar', 'title', fn ($q, ?Article $record) => $q
+                            ->where('is_pillar', true)
+                            ->when($record, fn ($q) => $q->whereKeyNot($record->id)))
+                        ->searchable()
+                        ->preload()
+                        ->nullable()
+                        ->helperText('Только для cluster-статей. NULL для pillar или standalone.'),
+                ]),
+
+            Section::make('Связанные сущности (M2M)')
+                ->description('Прямые связи с каталогом и ГОСТами — заменяют tag-pattern.')
+                ->collapsed()
+                ->schema([
+                    Select::make('products')
+                        ->label('Связанные товары (для «С этим товаром покупают»)')
+                        ->relationship('products', 'name')
+                        ->multiple()
+                        ->searchable()
+                        ->preload()
+                        ->helperText('2-5 товаров. Появятся блоком в конце статьи + в Article.about[] schema.'),
+
+                    Select::make('gosts')
+                        ->label('Связанные ГОСТы / серии')
+                        ->relationship('gosts', 'label')
+                        ->multiple()
+                        ->searchable()
+                        ->preload()
+                        ->helperText('1-3 ГОСТа. Показываются в byline + Article.about[].'),
+
+                    Select::make('catalogCategories')
+                        ->label('Связанные категории каталога')
+                        ->relationship('catalogCategories', 'name')
+                        ->multiple()
+                        ->searchable()
+                        ->preload()
+                        ->helperText('Cross-link в навигацию каталога.'),
+                ]),
+
+            Section::make('Размещение и видимость')
+                ->collapsed()
+                ->columns(3)
+                ->schema([
+                    Toggle::make('featured')
+                        ->label('Featured (на главную /blog)')
+                        ->inline(false),
+
+                    DateTimePicker::make('pinned_until')
+                        ->label('Sticky в категории до')
+                        ->seconds(false)
+                        ->helperText('Закрепить на верху своей рубрики до этой даты. Пусто = не sticky.'),
+
+                    Toggle::make('toc_enabled')
+                        ->label('Показывать TOC')
+                        ->default(true)
+                        ->inline(false)
+                        ->helperText('Snять для коротких статей без H2/H3 разделов.'),
+                ]),
+
+            Section::make('FAQ блок')
+                ->description('Заполняй ТОЛЬКО при реальных вопросах из Wordstat/Search Console — не ради schema-маркапа. Пустой = блок не показывается.')
+                ->collapsed()
+                ->schema([
+                    Repeater::make('faq')
+                        ->label('Вопросы и ответы')
+                        ->hiddenLabel()
+                        ->schema([
+                            TextInput::make('question')
+                                ->label('Вопрос')
+                                ->required()
+                                ->maxLength(200),
+                            Textarea::make('answer')
+                                ->label('Ответ')
+                                ->required()
+                                ->rows(3)
+                                ->maxLength(1000),
+                        ])
+                        ->defaultItems(0)
+                        ->addActionLabel('Добавить Q&A')
+                        ->reorderable(true)
+                        ->collapsible()
+                        ->itemLabel(fn (array $state): ?string => $state['question'] ?? null),
+                ]),
+
             Section::make('Авто-статистика и обновления')
                 ->description('Авторасчёт + read-only поле даты значимого обновления (управляется через action «Пометить обновлённой» в шапке).')
                 ->collapsed()
@@ -108,9 +214,6 @@ class ArticleForm
                         ->dehydrated(false)
                         ->placeholder('—'),
 
-                    // Read-only. Изменяется ТОЛЬКО через action в шапке —
-                    // это защищает от ручной подделки freshness-сигнала
-                    // (Google Helpful Content Update карает за такое).
                     DateTimePicker::make('updated_content_at')
                         ->label('Дата значимого обновления')
                         ->seconds(false)

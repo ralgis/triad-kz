@@ -10,6 +10,17 @@
         <h1 class="mt-4 text-3xl sm:text-4xl font-semibold text-slate-900">Статьи</h1>
         <p class="mt-2 text-slate-600">Материалы о ЖБИ, ГОСТах и применении в строительстве.</p>
 
+        @if($featured->isNotEmpty())
+            <section class="mt-8 pb-8 border-b border-slate-200">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">Рекомендуем</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach($featured as $article)
+                        <x-article-card :article="$article" />
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         <div class="mt-10 lg:grid lg:grid-cols-12 lg:gap-10">
             <main class="lg:col-span-9">
                 @if($articles->isEmpty())

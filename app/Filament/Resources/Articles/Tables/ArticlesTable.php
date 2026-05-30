@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Articles\Tables;
 
+use App\Enums\ArticleType;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -41,6 +42,30 @@ class ArticlesTable
                     ->badge()
                     ->color('info')
                     ->sortable(),
+
+                TextColumn::make('article_type')
+                    ->label('Тип')
+                    ->badge()
+                    ->color(fn ($state): string => match ((string) ($state?->value ?? $state)) {
+                        'pillar' => 'success',
+                        'guide' => 'info',
+                        'comparison' => 'warning',
+                        'news' => 'danger',
+                        'case' => 'gray',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn ($state): string => $state instanceof ArticleType ? $state->label() : (string) $state)
+                    ->toggleable(),
+
+                IconColumn::make('is_pillar')
+                    ->label('Pillar')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                IconColumn::make('featured')
+                    ->label('Featured')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('reading_minutes')
                     ->label('Чтение')

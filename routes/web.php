@@ -9,6 +9,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\GostController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\IndexNowKeyController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
@@ -66,6 +67,14 @@ Route::get('/robots.txt', RobotsController::class);
 // land in deploy config); the request itself is a handful of indexed
 // SELECTs.
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+
+// IndexNow ownership verification key. Search engines fetch /{key}.txt
+// after we POST to api.indexnow.org/IndexNow; body MUST equal the key.
+// {key} constrained to 32-128 hex/alphanumeric chars to avoid shadowing
+// any other .txt file we might add later.
+Route::get('/{key}.txt', IndexNowKeyController::class)
+    ->where('key', '[a-zA-Z0-9-]{8,128}')
+    ->name('indexnow.key');
 
 // Catch-all for content pages (about / gosts / payment / ...). MUST be
 // last — Laravel matches top-down and {page:slug} would otherwise

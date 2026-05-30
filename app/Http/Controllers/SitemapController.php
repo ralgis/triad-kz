@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Article;
+use App\Models\BlogCategory;
 use App\Models\Category;
 use App\Models\Page;
 use App\Models\Product;
@@ -64,12 +65,27 @@ final class SitemapController extends Controller
                     ->setPriority(0.7),
             ));
 
+        BlogCategory::query()
+            ->where('published', true)
+            ->where('listed', true)
+            ->get()
+            ->each(fn (BlogCategory $c) => $sitemap->add(
+                Url::create($c->url())
+                    ->setLastModificationDate($c->updated_at ?? now())
+                    ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
+                    ->setPriority(0.7),
+            ));
+
         Article::query()
             ->published()
             ->get()
             ->each(fn (Article $a) => $sitemap->add(
                 Url::create($a->url())
-                    ->setLastModificationDate($a->updated_at ?? $a->published_at ?? now())
+                    // effectiveModifiedAt is the freshness truth — picks
+                    // updated_content_at when set, else published_at.
+                    // Matches what we emit in schema.org dateModified.
+                    ->setLastModificationDate($a->effectiveModifiedAt() ?? $a->updated_at ?? now())
+                    ->setChangeFrequency(Url::CHANGE_FREQUENCY_MONTHLY)
                     ->setPriority(0.6),
             ));
 

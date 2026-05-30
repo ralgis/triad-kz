@@ -119,6 +119,87 @@
                     </div>
                 @endif
 
+                {{-- FAQ block — only renders when admin populated $article->faq
+                     with real Q&A. We mirror the visible content as
+                     FAQPage JSON-LD; Google requires the on-page content
+                     match the schema (no cloaking). --}}
+                @if(! empty($article->faq))
+                    <section class="mt-12 pt-8 border-t border-slate-200">
+                        <h2 id="faq" class="text-xl font-semibold text-slate-900 mb-6">Часто задаваемые вопросы</h2>
+                        <div class="space-y-3">
+                            @foreach($article->faq as $qa)
+                                <details class="group border border-slate-200 rounded-lg p-4 open:bg-slate-50">
+                                    <summary class="cursor-pointer font-medium text-slate-900 list-none flex items-start justify-between gap-4">
+                                        <span>{{ $qa['question'] ?? '' }}</span>
+                                        <svg class="size-5 text-slate-400 group-open:rotate-180 transition shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </summary>
+                                    <div class="mt-3 text-slate-700 leading-relaxed whitespace-pre-line">
+                                        {{ $qa['answer'] ?? '' }}
+                                    </div>
+                                </details>
+                            @endforeach
+                        </div>
+                    </section>
+                    @include('partials.schema.faq', ['faq' => $article->faq])
+                @endif
+
+                {{-- Pillar-of-cluster: when this article is a cluster, link
+                     back to its pillar. Title-as-anchor keeps the SEO weight
+                     concentrated on the topic keyword. --}}
+                @if($pillarOfCluster)
+                    <aside class="mt-12 rounded-lg border border-brand-200 bg-brand-50 p-5">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-brand-700">Часть темы</p>
+                        <a href="{{ $pillarOfCluster->url() }}"
+                           class="mt-1 inline-block text-lg font-medium text-brand-900 hover:underline">
+                            {{ $pillarOfCluster->title }}
+                        </a>
+                        @if($pillarOfCluster->subtitle)
+                            <p class="mt-1 text-sm text-brand-700/80">{{ $pillarOfCluster->subtitle }}</p>
+                        @endif
+                    </aside>
+                @endif
+
+                {{-- Clusters-of-pillar: when this is the pillar, list its
+                     spokes. Auto-rendered (no Filament validation needed —
+                     they always reflect current DB state). --}}
+                @if($clustersOfPillar->isNotEmpty())
+                    <section class="mt-12 pt-8 border-t border-slate-200">
+                        <h2 class="text-xl font-semibold text-slate-900 mb-6">В этой теме</h2>
+                        <ul class="space-y-2">
+                            @foreach($clustersOfPillar as $cluster)
+                                <li>
+                                    <a href="{{ $cluster->url() }}"
+                                       class="flex items-baseline gap-3 text-slate-700 hover:text-brand-600">
+                                        <span class="text-brand-500">→</span>
+                                        <span>
+                                            <span class="font-medium">{{ $cluster->title }}</span>
+                                            @if($cluster->subtitle)
+                                                <span class="block text-sm text-slate-500">{{ $cluster->subtitle }}</span>
+                                            @endif
+                                        </span>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </section>
+                @endif
+
+                {{-- Related products from article_product M2M — drives the
+                     blog→catalog funnel. Distinct from $related (which is
+                     same-rubric articles). --}}
+                @if($article->products->isNotEmpty())
+                    <section class="mt-12 pt-8 border-t border-slate-200">
+                        <h2 class="text-xl font-semibold text-slate-900 mb-6">Товары из статьи</h2>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                            @foreach($article->products as $product)
+                                <x-product-card :product="$product" />
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+
                 @if($related->isNotEmpty())
                     <section class="mt-16 pt-8 border-t border-slate-200">
                         <h2 class="text-xl font-semibold text-slate-900 mb-6">

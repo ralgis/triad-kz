@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\Article;
+use App\Models\BlogCategory;
+use App\Observers\BlogIndexNowObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -19,6 +22,18 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureRateLimits();
+        $this->configureBlogObservers();
+    }
+
+    /**
+     * IndexNow ping for blog content changes. Attaches to Article +
+     * BlogCategory lifecycle events. Disabled when no key configured
+     * (the observer's client gates on isConfigured()).
+     */
+    private function configureBlogObservers(): void
+    {
+        Article::observe(BlogIndexNowObserver::class);
+        BlogCategory::observe(BlogIndexNowObserver::class);
     }
 
     /**

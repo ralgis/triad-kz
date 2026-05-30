@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Contracts\HasPublicUrl;
+use App\Enums\ArticleType;
 use App\Traits\HasSeo;
 use App\Traits\HasSlugRedirect;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\HasMedia;
@@ -31,6 +34,9 @@ class Article extends Model implements HasMedia, HasPublicUrl
 
     protected $fillable = [
         'blog_category_id',
+        'article_type',
+        'is_pillar',
+        'pillar_id',
         'title',
         'subtitle',
         'slug',
@@ -40,6 +46,10 @@ class Article extends Model implements HasMedia, HasPublicUrl
         'reading_minutes',
         'published_at',
         'updated_content_at',
+        'featured',
+        'pinned_until',
+        'toc_enabled',
+        'faq',
         // SEO
         'meta_title',
         'meta_description',
@@ -55,6 +65,12 @@ class Article extends Model implements HasMedia, HasPublicUrl
             'updated_content_at' => 'datetime',
             'reading_minutes' => 'integer',
             'word_count' => 'integer',
+            'article_type' => ArticleType::class,
+            'is_pillar' => 'boolean',
+            'featured' => 'boolean',
+            'pinned_until' => 'datetime',
+            'toc_enabled' => 'boolean',
+            'faq' => 'array',
         ], $this->seoCasts());
     }
 
@@ -65,6 +81,22 @@ class Article extends Model implements HasMedia, HasPublicUrl
             ->saveSlugsTo('slug')
             ->slugsShouldBeNoLongerThan(100)
             ->doNotGenerateSlugsOnUpdate();
+    }
+
+    /**
+     * Sanitize WYSIWYG HTML on save — strips <script>, event handlers,
+     * dangerous attributes via HTMLPurifier (config/purifier.php). We
+     * sanitize on SAVE not on render so cached content is already safe
+     * and we don't double-escape ([Larasec guidance](https://stackshield.io/blog/laravel-xss-protection-guide)).
+     *
+     * Admin is trusted but: (a) account compromise, (b) future user-
+     * submitted content (Phase 3 comments) would otherwise carry XSS.
+     */
+    public function setContentAttribute(?string $value): void
+    {
+        $this->attributes['content'] = $value === null || $value === ''
+            ? $value
+            : clean($value, 'default');
     }
 
     protected static function booted(): void
@@ -87,6 +119,63 @@ class Article extends Model implements HasMedia, HasPublicUrl
     public function blogCategory(): BelongsTo
     {
         return $this->belongsTo(BlogCategory::class);
+    }
+
+    /**
+     * The pillar this article is a cluster of. null = either standalone
+     * or this article IS the pillar (use is_pillar flag to disambiguate).
+     *
+     * @return BelongsTo<Article, $this>
+     */
+    public function pillar(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'pillar_id');
+    }
+
+    /**
+     * All clusters that point at this article as their pillar — only
+     * meaningful when is_pillar = true. We don't constrain on the flag
+     * in the query (would shadow if data drifts); call sites should
+     * gate on is_pillar themselves.
+     *
+     * @return HasMany<Article, $this>
+     */
+    public function clusters(): HasMany
+    {
+        return $this->hasMany(self::class, 'pillar_id');
+    }
+
+    /**
+     * @return BelongsToMany<Product, $this>
+     */
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class)
+            ->withPivot('sort_order')
+            ->orderByPivot('sort_order');
+    }
+
+    /**
+     * @return BelongsToMany<Gost, $this>
+     */
+    public function gosts(): BelongsToMany
+    {
+        return $this->belongsToMany(Gost::class)
+            ->withPivot('sort_order')
+            ->orderByPivot('sort_order');
+    }
+
+    /**
+     * Catalog categories (NOT blog rubrics) — articles can cross-reference
+     * product categories for breadcrumb-style cross-linking.
+     *
+     * @return BelongsToMany<Category, $this>
+     */
+    public function catalogCategories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class)
+            ->withPivot('sort_order')
+            ->orderByPivot('sort_order');
     }
 
     public function registerMediaCollections(): void

@@ -13,14 +13,24 @@ final class BlogController extends Controller
 {
     public function index(): View
     {
+        // Listing ordering: featured first (sticky to /blog hero strip),
+        // then chronological. Pinned sorting only applies in the category
+        // view — on the global index, featured does the «promote» job.
         $articles = Article::query()
             ->published()
             ->with('blogCategory')
+            ->orderByDesc('featured')
             ->latest('published_at')
             ->paginate(12);
 
-        // Sidebar — rubrics with article counts for the listed/published set.
-        // Eagerly loaded into the index view so layout doesn't N+1.
+        $featured = Article::query()
+            ->published()
+            ->where('featured', true)
+            ->with('blogCategory')
+            ->latest('published_at')
+            ->limit(6)
+            ->get();
+
         $categories = BlogCategory::query()
             ->published()
             ->listed()
@@ -28,7 +38,7 @@ final class BlogController extends Controller
             ->orderBy('order')
             ->get();
 
-        return view('blog.index', compact('articles', 'categories'));
+        return view('blog.index', compact('articles', 'featured', 'categories'));
     }
 
     /**
@@ -44,18 +54,27 @@ final class BlogController extends Controller
             404,
         );
 
-        $article->load('blogCategory');
+        $article->load(['blogCategory', 'pillar', 'products', 'gosts']);
 
-        $tocItems = $toc->extract($article->content ?? '');
+        $tocItems = $article->toc_enabled ? $toc->extract($article->content ?? '') : [];
         $contentWithAnchors = $toc->injectIds($article->content ?? '');
 
         $related = $article->relatedInBlogCategory(limit: 4);
+
+        // Pillar-of-cluster: every cluster gets its pillar referenced
+        // back. Pillar pages get the list of all their clusters.
+        $pillarOfCluster = $article->pillar;
+        $clustersOfPillar = $article->is_pillar
+            ? $article->clusters()->published()->orderBy('title')->get()
+            : collect();
 
         return view('blog.article', [
             'article' => $article,
             'tocItems' => $tocItems,
             'contentHtml' => $contentWithAnchors,
             'related' => $related,
+            'pillarOfCluster' => $pillarOfCluster,
+            'clustersOfPillar' => $clustersOfPillar,
         ]);
     }
 
@@ -63,9 +82,14 @@ final class BlogController extends Controller
     {
         abort_unless($category->published, 404);
 
+        // Ordering within a rubric: currently-pinned first (pinned_until
+        // > now), then featured, then chronological. Pinned beats
+        // featured so a campaign can override the perma-promote layer.
         $articles = Article::query()
             ->published()
             ->where('blog_category_id', $category->id)
+            ->orderByRaw('CASE WHEN pinned_until > ? THEN 0 ELSE 1 END', [now()])
+            ->orderByDesc('featured')
             ->latest('published_at')
             ->paginate(12);
 
