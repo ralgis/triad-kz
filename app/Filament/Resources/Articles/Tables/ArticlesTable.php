@@ -36,6 +36,23 @@ class ArticlesTable
                     ->weight('bold')
                     ->wrap(),
 
+                TextColumn::make('blogCategory.name')
+                    ->label('Рубрика')
+                    ->badge()
+                    ->color('info')
+                    ->sortable(),
+
+                TextColumn::make('reading_minutes')
+                    ->label('Чтение')
+                    ->suffix(' мин')
+                    ->color('gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('word_count')
+                    ->label('Слов')
+                    ->color('gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('slug')
                     ->label('URL')
                     ->color('gray')
