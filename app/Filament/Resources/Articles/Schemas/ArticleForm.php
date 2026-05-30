@@ -172,6 +172,66 @@ class ArticleForm
                         ->helperText('Snять для коротких статей без H2/H3 разделов.'),
                 ]),
 
+            Section::make('How-to шаги (Phase 3, опционально)')
+                ->description('Для guide-статей с пошаговой инструкцией («Как монтировать колодец»). Эмитит HowTo JSON-LD для AI extraction (Google убрал SERP rich results 2023).')
+                ->collapsed()
+                ->schema([
+                    Repeater::make('how_to_steps')
+                        ->label('Шаги')
+                        ->hiddenLabel()
+                        ->schema([
+                            TextInput::make('name')
+                                ->label('Название шага')
+                                ->required()
+                                ->maxLength(120),
+                            Textarea::make('text')
+                                ->label('Описание')
+                                ->required()
+                                ->rows(2)
+                                ->maxLength(500),
+                            TextInput::make('image')
+                                ->label('URL изображения (необязательно)')
+                                ->url()
+                                ->maxLength(500),
+                        ])
+                        ->defaultItems(0)
+                        ->addActionLabel('Добавить шаг')
+                        ->reorderable(true)
+                        ->collapsible()
+                        ->itemLabel(fn (array $state): ?string => $state['name'] ?? null),
+                ]),
+
+            Section::make('Использованные источники (Phase 3, опционально)')
+                ->description('Внешние ссылки на ГОСТы, исследования, статьи. Отображаются блоком внизу с rel="external nofollow noopener".')
+                ->collapsed()
+                ->schema([
+                    Repeater::make('external_sources')
+                        ->label('Источники')
+                        ->hiddenLabel()
+                        ->columns(2)
+                        ->schema([
+                            TextInput::make('title')
+                                ->label('Название')
+                                ->required()
+                                ->maxLength(200),
+                            TextInput::make('url')
+                                ->label('URL')
+                                ->url()
+                                ->maxLength(500),
+                            TextInput::make('accessed_at')
+                                ->label('Дата доступа')
+                                ->placeholder('2026-05-30'),
+                            TextInput::make('note')
+                                ->label('Примечание')
+                                ->maxLength(200),
+                        ])
+                        ->defaultItems(0)
+                        ->addActionLabel('Добавить источник')
+                        ->reorderable(true)
+                        ->collapsible()
+                        ->itemLabel(fn (array $state): ?string => $state['title'] ?? null),
+                ]),
+
             Section::make('FAQ блок')
                 ->description('Заполняй ТОЛЬКО при реальных вопросах из Wordstat/Search Console — не ради schema-маркапа. Пустой = блок не показывается.')
                 ->collapsed()

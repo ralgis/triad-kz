@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Articles\Pages;
 
 use App\Filament\Actions\InternalLinkPickerAction;
 use App\Filament\Resources\Articles\ArticleResource;
+use App\Http\Middleware\AllowDraftPreviewForAdmin;
 use App\Models\Article;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -23,12 +24,32 @@ class EditArticle extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            $this->previewAction(),
             $this->markUpdatedAction(),
             InternalLinkPickerAction::make(),
             DeleteAction::make(),
             ForceDeleteAction::make(),
             RestoreAction::make(),
         ];
+    }
+
+    /**
+     * Open the public article page with a 15-min signed-URL preview
+     * token. The middleware AllowDraftPreviewForAdmin sees the flag +
+     * signature + admin auth and lets BlogController::show render even
+     * for drafts and future-scheduled articles.
+     */
+    private function previewAction(): Action
+    {
+        /** @var Article $record */
+        $record = $this->getRecord();
+
+        return Action::make('previewDraft')
+            ->label('Превью на сайте')
+            ->icon(Heroicon::OutlinedEye)
+            ->color('gray')
+            ->url(fn (): string => AllowDraftPreviewForAdmin::urlFor($record))
+            ->openUrlInNewTab();
     }
 
     /**

@@ -38,8 +38,8 @@
                 @endif
             </main>
 
-            @if($categories->isNotEmpty())
-                <aside class="lg:col-span-3 mt-12 lg:mt-0">
+            <aside class="lg:col-span-3 mt-12 lg:mt-0 space-y-8">
+                @if($categories->isNotEmpty())
                     <nav aria-label="Рубрики блога">
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
                             Рубрики
@@ -58,8 +58,26 @@
                             @endforeach
                         </ul>
                     </nav>
-                </aside>
-            @endif
+                @endif
+
+                @if($popular->isNotEmpty())
+                    <section aria-label="Популярное за неделю">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+                            Популярное
+                        </p>
+                        <ul class="space-y-2">
+                            @foreach($popular as $p)
+                                <li>
+                                    <a href="{{ $p->url() }}"
+                                       class="block px-3 py-2 rounded text-sm text-slate-700 hover:bg-slate-100 hover:text-brand-700 transition leading-snug">
+                                        {{ $p->title }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </section>
+                @endif
+            </aside>
         </div>
     </div>
 @endsection

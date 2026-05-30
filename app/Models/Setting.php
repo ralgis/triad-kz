@@ -84,6 +84,7 @@ class Setting extends Model implements HasMedia
         'analytics_yandex_id',
         'analytics_google_id',
         'analytics_enabled',
+        'yandex_metrika_oauth_token',
         'indexnow_key',
         'home_meta_title',
         'home_meta_description',
@@ -98,6 +99,9 @@ class Setting extends Model implements HasMedia
             'working_hours' => 'array',
             'special_days' => 'array',
             'analytics_enabled' => 'boolean',
+            // Yandex Metrika OAuth token is sensitive — encrypted at
+            // rest. Decryption is transparent on attribute access.
+            'yandex_metrika_oauth_token' => 'encrypted',
         ];
     }
 

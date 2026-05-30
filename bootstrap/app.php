@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\AllowDraftPreviewForAdmin;
 use App\Http\Middleware\EnsureNoindexInNonProd;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -27,6 +28,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // allowed to be indexed; everywhere else gets X-Robots-Tag on
         // every response. See app/Http/Middleware/EnsureNoindexInNonProd.
         $middleware->append(EnsureNoindexInNonProd::class);
+
+        // Admin draft preview flag. Sets a per-request marker when the
+        // request carries ?preview=1 + valid signature + authenticated
+        // user; BlogController::show reads it to skip the published
+        // existence check. Safe to global-append — it's no-op for non-
+        // matching requests.
+        $middleware->append(AllowDraftPreviewForAdmin::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

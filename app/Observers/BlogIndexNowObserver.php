@@ -9,6 +9,7 @@ use App\Models\Article;
 use App\Models\Setting;
 use App\Services\IndexNowClient;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * Pings IndexNow whenever a published Article or any BlogCategory
@@ -49,7 +50,7 @@ final class BlogIndexNowObserver
 
     private function isVisibleArticle(Article $article): bool
     {
-        /** @var \Illuminate\Support\Carbon|null $when */
+        /** @var Carbon|null $when */
         $when = $article->published_at;
 
         return $when !== null && $when->lte(now());

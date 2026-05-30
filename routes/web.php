@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\BlogFeedController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
@@ -43,9 +44,12 @@ Route::get('/order/{order:order_number}', [OrderController::class, 'show'])->nam
 Route::get('/order/{order:order_number}/invoice', [OrderController::class, 'invoice'])->name('order.invoice');
 
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
-// Category route MUST be declared before {article:slug} so /blog/category/{slug}
-// doesn't get shadowed by the article catch-all. Same trick as Page slug
+// Feeds and category MUST be declared before {article:slug} so they
+// don't get shadowed by the article catch-all. Same trick as Page slug
 // catch-all at the bottom of the file.
+Route::get('/blog/feed.rss', [BlogFeedController::class, 'rss'])->name('blog.feed.rss');
+Route::get('/blog/feed.atom', [BlogFeedController::class, 'atom'])->name('blog.feed.atom');
+Route::get('/blog/search', [BlogController::class, 'search'])->name('blog.search');
 Route::get('/blog/category/{category:slug}', [BlogController::class, 'category'])->name('blog.category');
 Route::get('/blog/{article:slug}', [BlogController::class, 'show'])->name('blog.article');
 

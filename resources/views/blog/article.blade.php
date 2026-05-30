@@ -5,7 +5,9 @@
         ?: \Illuminate\Support\Str::limit(strip_tags($article->content ?? ''), 160),
     'og_image' => $article->getFirstMediaUrl('cover', 'og') ?: null,
     'og_type' => 'article',
-    'schema_jsonld' => view('partials.schema.article', compact('article'))->render(),
+    'schema_jsonld' => view('partials.schema.article', compact('article'))->render()
+        .(! empty($article->faq) ? view('partials.schema.faq', ['faq' => $article->faq])->render() : '')
+        .(! empty($article->how_to_steps) ? view('partials.schema.howto', ['article' => $article, 'steps' => $article->how_to_steps])->render() : ''),
 ])
 
 @php
@@ -50,7 +52,29 @@
                 </aside>
             @endif
 
-            <article class="lg:col-span-{{ ! empty($tocItems) ? '9' : '12' }} max-w-3xl">
+            <article class="lg:col-span-{{ ! empty($tocItems) ? '9' : '12' }} max-w-3xl"
+                     x-data="{
+                         depthFired: { 25: false, 50: false, 75: false, 100: false },
+                         fireDepth(pct) {
+                             if (this.depthFired[pct]) return;
+                             this.depthFired[pct] = true;
+                             if (typeof ym === 'function' && {{ \App\Models\Setting::current()->analytics_yandex_id ? 'true' : 'false' }}) {
+                                 ym({{ \App\Models\Setting::current()->analytics_yandex_id ?: 0 }}, 'reachGoal', 'article_read_' + pct + 'pct');
+                             }
+                             if (typeof gtag === 'function') {
+                                 gtag('event', 'article_read_' + pct + 'pct', { article_slug: '{{ $article->slug }}' });
+                             }
+                         },
+                         onScroll() {
+                             const el = this.$el;
+                             const top = el.getBoundingClientRect().top;
+                             const height = el.offsetHeight;
+                             const winH = window.innerHeight;
+                             const read = Math.min(100, Math.max(0, ((winH - top) / height) * 100));
+                             [25, 50, 75, 100].forEach(p => { if (read >= p) this.fireDepth(p); });
+                         }
+                     }"
+                     x-init="window.addEventListener('scroll', onScroll, { passive: true })">
                 <header>
                     @if($article->blogCategory)
                         <a href="{{ $article->blogCategory->url() }}"
@@ -113,6 +137,17 @@
                     </figure>
                 @endif
 
+                {{-- TL;DR — admin-marked summary block, hoisted above the
+                     main content. AI engines (Perplexity especially) read
+                     these short hoisted summaries as the canonical answer
+                     for «what is this article about». --}}
+                @if($tldr)
+                    <aside class="mt-8 rounded-lg bg-amber-50 border border-amber-200 p-5 article-tldr">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-amber-800">TL;DR</p>
+                        <p class="mt-2 text-slate-800 leading-relaxed">{{ $tldr }}</p>
+                    </aside>
+                @endif
+
                 @if(! empty($contentHtml))
                     <div class="prose prose-slate mt-8 max-w-none prose-headings:scroll-mt-24">
                         {!! $contentHtml !!}
@@ -142,7 +177,69 @@
                             @endforeach
                         </div>
                     </section>
-                    @include('partials.schema.faq', ['faq' => $article->faq])
+                @endif
+
+                {{-- HowTo block — for guide articles describing step-by-step
+                     procedures. Renders the steps as an ordered list with
+                     optional images. JSON-LD emitted in the layout head. --}}
+                @if(! empty($article->how_to_steps))
+                    <section class="mt-12 pt-8 border-t border-slate-200">
+                        <h2 class="text-xl font-semibold text-slate-900 mb-6">Пошаговое руководство</h2>
+                        <ol class="space-y-6">
+                            @foreach($article->how_to_steps as $i => $step)
+                                <li class="flex gap-4">
+                                    <div class="shrink-0 size-8 rounded-full bg-brand-500 text-white flex items-center justify-center text-sm font-semibold">
+                                        {{ $i + 1 }}
+                                    </div>
+                                    <div class="flex-1">
+                                        @if(! empty($step['name']))
+                                            <p class="font-medium text-slate-900">{{ $step['name'] }}</p>
+                                        @endif
+                                        @if(! empty($step['text']))
+                                            <p class="mt-1 text-slate-700 leading-relaxed">{{ $step['text'] }}</p>
+                                        @endif
+                                        @if(! empty($step['image']))
+                                            <img src="{{ $step['image'] }}"
+                                                 alt="Шаг {{ $i + 1 }}: {{ $step['name'] ?? '' }}"
+                                                 class="mt-3 rounded-lg border border-slate-200 max-w-md">
+                                        @endif
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ol>
+                    </section>
+                @endif
+
+                {{-- External sources — E-E-A-T trust signal for readers.
+                     rel="external nofollow noopener" on all links: no
+                     PageRank leak, no window.opener exposure, marked
+                     external. --}}
+                @if(! empty($article->external_sources))
+                    <section class="mt-12 pt-8 border-t border-slate-200">
+                        <h2 class="text-base font-semibold text-slate-900 mb-4">Использованные источники</h2>
+                        <ul class="space-y-2 text-sm">
+                            @foreach($article->external_sources as $src)
+                                <li>
+                                    @if(! empty($src['url']))
+                                        <a href="{{ $src['url'] }}"
+                                           rel="external nofollow noopener"
+                                           target="_blank"
+                                           class="text-brand-600 hover:underline">
+                                            {{ $src['title'] ?? $src['url'] }}
+                                        </a>
+                                    @else
+                                        <span class="text-slate-700">{{ $src['title'] ?? '' }}</span>
+                                    @endif
+                                    @if(! empty($src['accessed_at']))
+                                        <span class="text-slate-400 text-xs">(доступ: {{ $src['accessed_at'] }})</span>
+                                    @endif
+                                    @if(! empty($src['note']))
+                                        <span class="text-slate-500 text-xs">— {{ $src['note'] }}</span>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    </section>
                 @endif
 
                 {{-- Pillar-of-cluster: when this article is a cluster, link

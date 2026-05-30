@@ -50,6 +50,8 @@ class Article extends Model implements HasMedia, HasPublicUrl
         'pinned_until',
         'toc_enabled',
         'faq',
+        'how_to_steps',
+        'external_sources',
         // SEO
         'meta_title',
         'meta_description',
@@ -71,6 +73,8 @@ class Article extends Model implements HasMedia, HasPublicUrl
             'pinned_until' => 'datetime',
             'toc_enabled' => 'boolean',
             'faq' => 'array',
+            'how_to_steps' => 'array',
+            'external_sources' => 'array',
         ], $this->seoCasts());
     }
 
@@ -249,6 +253,35 @@ class Article extends Model implements HasMedia, HasPublicUrl
      * technical reading speed — generic blog calculators use 250 wpm
      * which overstates how fast ЖБИ content actually reads.
      */
+    /**
+     * Pulls out a `[summary]...[/summary]` block from content (case-
+     * insensitive, multiline) for the TL;DR box rendered above the
+     * cover image. Returns null when no marker is present.
+     *
+     * The marker is admin-typed — case is preserved for tags but body
+     * is taken verbatim. Stripped from the main content render in the
+     * view layer.
+     */
+    public function extractTldr(): ?string
+    {
+        if (! preg_match('/\[summary\](?P<body>.*?)\[\/summary\]/isu', (string) $this->content, $m)) {
+            return null;
+        }
+
+        $body = trim(strip_tags($m['body']));
+
+        return $body !== '' ? $body : null;
+    }
+
+    public function contentWithoutTldr(): string
+    {
+        return (string) preg_replace(
+            '/\[summary\].*?\[\/summary\]/isu',
+            '',
+            (string) $this->content,
+        );
+    }
+
     public function recomputeReadingStats(): void
     {
         $plain = trim(strip_tags((string) $this->content));
