@@ -1,0 +1,508 @@
+# CLAUDE.md — Blog subsystem
+
+> Engineering conventions for the triad.kz blog (Article + BlogCategory
+> + their Filament resources, views, schema partials).
+>
+> **Сестринский документ:** [PLAN.md](./PLAN.md) — стратегия,
+> SEO-калибровка, web research, change log, phase roadmap.
+>
+> **Корневой контекст:** [/CLAUDE.md](../../CLAUDE.md) — project-wide
+> правила (deploy, security, code style, commit conventions).
+>
+> Этот файл — engineering layer. Сюда смотрят AI/dev при работе
+> непосредственно с кодом блога. Антипаттерны и rationale здесь
+> приоритетны над общим описанием — общее в PLAN.md.
+
+---
+
+## 0. Скоуп владения
+
+Этот CLAUDE.md покрывает поведение в следующих файлах/путях:
+
+| Path | Что |
+|---|---|
+| `app/Models/Article.php` | Главная модель публикации |
+| `app/Models/BlogCategory.php` | Модель рубрики |
+| `app/Filament/Resources/Articles/**` | Админка статей |
+| `app/Filament/Resources/BlogCategories/**` | Админка рубрик |
+| `resources/views/blog/index.blade.php` | Главная блога |
+| `resources/views/blog/article.blade.php` | Страница статьи |
+| `resources/views/blog/category.blade.php` | Страница рубрики *(Phase 1 в работе)* |
+| `resources/views/partials/schema/article.blade.php` | JSON-LD статьи |
+| `resources/views/partials/schema/organization.blade.php` | JSON-LD организации (singleton) |
+| `resources/views/partials/schema/blog-category.blade.php` | JSON-LD CollectionPage *(Phase 1 todo)* |
+| `resources/views/partials/schema/breadcrumb.blade.php` | JSON-LD BreadcrumbList *(Phase 1 todo)* |
+| `routes/web.php` *(блок `/blog/*`)* | Маршруты |
+| `database/migrations/*_*blog*` | Миграции рубрик и расширения статей |
+| `app/Http/Controllers/BlogController.php` | Контроллер блога |
+| `app/Services/ContentToc.php` *(Phase 1 todo)* | Парсер TOC из H2/H3 |
+
+Если правишь файл **не из списка** — этот документ может не применяться,
+проверь corresponding CLAUDE.md соседнего модуля.
+
+---
+
+## 1. Канонические решения (decision log)
+
+Каждое решение — со ссылкой на rationale. Не менять без understanding the
+trade-off. Когда меняешь — обновляй и этот файл и PLAN.md §22 change log.
+
+### 1.1. Publisher-only attribution
+
+**Решение:** `Article.author == Article.publisher == Organization`
+(@id `https://triad.kz/#organization`).
+
+**Почему:** ЖБИ не YMYL ниша. Person entity влияет на ранжирование 1-3%,
+AI-цитирование +10-15%. Operational cost (реальный инженер, реальная био,
+поддержка sameAs) высокий. Fake byline = Google Spam Policies → manual action.
+
+**Когда пересмотреть:** появился верифицированный эксперт-инженер у
+заказчика. Тогда Author entity возвращается в Phase 2 как опциональная
+fence, не как обязательная фича.
+
+**Файл impact:** `app/Models/Article.php` (нет `author_id`, нет `author()`
+relation), `partials/schema/article.blade.php` (author = Organization @id).
+
+### 1.2. `updated_content_at` — read-only + action-only
+
+**Решение:** колонка `updated_content_at` ставится **только** через
+`EditArticle::markUpdatedAction()`. В Filament-форме поле `disabled +
+dehydrated(false)`. Никаких других mutators.
+
+**Почему:** Google Helpful Content Update (2023+) карает за fake-freshness
+паттерны — частое обновление timestamp без существенных правок контента
+снижает rank. Если поле editable в форме, редактор поставит «вчера» и
+смысл механизма теряется.
+
+**API:**
+```php
+// Use:
+$action = $editArticle->markUpdatedAction();   // через Filament UI
+
+// DON'T do:
+$article->updated_content_at = now();          // обходит защиту
+$article->update(['updated_content_at' => $x]); // обходит защиту
+```
+
+Fallback на `published_at` в `effectiveModifiedAt()` — используется для
+`schema.org dateModified`, всегда возвращает валидную дату.
+
+### 1.3. Composite index `[blog_category_id, published_at]`
+
+**Решение:** `[blog_category_id, published_at]` — equality-first,
+не `[published_at, blog_category_id]`.
+
+**Почему:** hot listing query это:
+```sql
+SELECT * FROM articles
+WHERE blog_category_id = ? AND published_at <= NOW()
+ORDER BY published_at DESC
+```
+
+MySQL/PostgreSQL планировщики предпочитают prefix-match на equality
+column, затем range scan. Reverse order не позволил бы prefix-matchить
+по category.
+
+**Migration:** `2026_05_30_020002_add_seo_fields_to_articles_table.php`,
+индекс `articles_cat_pub_idx`.
+
+### 1.4. Reading-stats regex через `\p{P}`
+
+**Решение:** `preg_split('/[\s\p{P}]+/u', $plain, -1, PREG_SPLIT_NO_EMPTY)`,
+не `preg_match_all('/\b\w+\b/u', $plain)`.
+
+**Почему:** `\b` word boundary в PCRE Unicode-режиме неконсистентно
+работает с кириллицей (зависит от UCD-таблиц). `\p{P}` — Unicode
+punctuation class — стабильно отделяет слова от препинания.
+
+**Файл:** `app/Models/Article.php::recomputeReadingStats()`.
+
+### 1.5. Spatie cover конверсии 3 ratios + min-width 1200
+
+**Решение:** Article cover имеет 7 конверсий, включая `schema_1_1`,
+`schema_4_3`, `schema_16_9` (все 1200px+ по широкой стороне). В форме —
+валидация `dimensions:min_width=1200` на upload.
+
+**Почему:** Google Article schema рекомендует image[] с 3 aspect ratios.
+Без min-width защиты Spatie upscale-нет до 1200, выдаст blurry thumbnails
+в SERP. Search Console предупреждает об этом.
+
+**Файлы:** `app/Models/Article.php::registerMediaConversions()`,
+`app/Filament/Resources/Articles/Schemas/ArticleForm.php` (validation rule).
+
+### 1.6. `BlogCategory` ≠ `Category`
+
+**Решение:** отдельная модель + таблица `blog_categories` для рубрик блога;
+не reuse каталоговой `Category`.
+
+**Почему:** Slug namespace и SEO-funnel блога и каталога должны быть
+независимыми. Шаринг таблицы сложил бы несвязанные concerns:
+- Каталог индексируется в Y.Маркете / Google Shopping; блог — в SERP
+- Блог-рубрика и каталог-категория могут иметь одинаковое имя но разные
+  slug-конвенции
+- Изменения схемы (FK, fields) одной модели не должны затрагивать другую
+
+### 1.7. Meilisearch с дня 1 (не MySQL FULLTEXT)
+
+**Решение:** Phase 3 `/blog/search` через Meilisearch с русскими
+analyzers, не через MySQL FULLTEXT.
+
+**Почему:** MySQL/MariaDB FULLTEXT-парсеры **не поддерживают русскую
+морфологию**. «бетон» не найдёт «бетонный/бетонная». False economy
+«поставим FULLTEXT пока статей мало, перейдём на Meilisearch потом» —
+переписывать дороже чем сделать сразу.
+
+### 1.8. Indexing protocol matrix
+
+| Search engine | Protocol | Когда |
+|---|---|---|
+| Yandex | IndexNow | Post-save observer (publish/update/delete) |
+| Bing | IndexNow (тот же endpoint) | Тот же observer |
+| Google | **ничего программно** | Search Console manual submit + natural crawl |
+
+**Не пинговать Google sitemap** — endpoint удалён июнь 2023 (`ping?sitemap=`
+возвращает 404).
+
+---
+
+## 2. Антипаттерны (НЕ делать)
+
+Каждый антипаттерн = реальная ошибка которую можно допустить. Read this
+перед PR review.
+
+| ❌ Don't | ✅ Use instead | Why |
+|---|---|---|
+| Auto-touch `updated_content_at` на save | Action-only через `markUpdatedAction` | Google карает за fake freshness |
+| Fake author byline | Publisher-only (Organization как author) | Spam Policies, manual action risk |
+| `FAQPage` schema на каждом pillar | Только при реальных Q&A из Wordstat/GSC | Keyword-stuffing flag |
+| `\b` в PCRE для русского текста | `preg_split('/[\s\p{P}]+/u', ...)` | `\b` ненадёжен на Cyrillic |
+| MySQL FULLTEXT для русского блога | Meilisearch с русскими analyzers | Нет морфологии |
+| `view_count++` в middleware на каждый запрос | Y.Metрика Reports API в cache | БД-нагрузка + race conditions |
+| Ping Google sitemap endpoint | Search Console submit + IndexNow для Yandex | Endpoint удалён 2023 |
+| `<meta name="keywords">` для Yandex | Только `<meta name="description">` | Yandex игнорит keywords с 2014 |
+| HowTo schema ожидая SERP rich results | HowTo только для AI extraction (Phase 2) | Google убрал HowTo SERP 2023 |
+| `SpeakableSpecification` schema | Definitions-on-top + TL;DR block | Google Assistant deprecated 2023 |
+| Шарить slug namespace `Category` и `BlogCategory` | Отдельные модели и таблицы | Coupling непохожих concerns |
+| Index `[published_at, blog_category_id]` | `[blog_category_id, published_at]` | Equality-first для hot query |
+| Полагаться на Larastan cast type-narrowing в union return | Явные `/** @var Carbon\|null */` аннотации | Stub limitation в larastan |
+| Cover image upload без min-width validation | `dimensions:min_width=1200` rule | Blurry SERP thumbnails |
+| Inline-create BlogCategory из ArticleForm | Создавать через BlogCategoryResource | Огрызок без description/cover/SEO |
+| `pillar_id` без `is_pillar` | `is_pillar` bool + `pillar_id` self-ref | Двусмысленность NULL pillar_id |
+| Tags pivot table | `article_product` + `article_gost` + `article_category` (Phase 2) | Thin-content tag URL'ы каннибализируют |
+| News sitemap для B2B-ЖБИ блога | Не делать пока 5+ news/нед нет | Пустой news-sitemap = шум |
+| Counter inkrement через POST middleware с cookie debounce | Yandex.Metрика API + Redis cache | Debounce cookie обходится |
+| `rel="prev"/"next"` для пагинации | Canonical на себя на каждой `/blog/page/N` | Google игнорит rel=prev/next с 2019 |
+| `Organization.hasMap` для Y.Бизнес связки | Webmaster region binding + Y.Бизнес claim domain | hasMap не управляет Y.Бизнес |
+| Inline JSON-LD в blade view | Partial `partials/schema/*.blade.php` | Переиспользование + audit |
+
+---
+
+## 3. SEO-инварианты (не нарушать)
+
+Вещи которые **должны быть** на каждой странице блога. Эти не «рекомендация»
+— они foundational.
+
+### 3.1. Canonical всегда self
+
+`<link rel="canonical" href="{url()->current()}">` — если admin не задал
+явный `canonical_url` в SEO-секции.
+
+Реализация: `partials/head.blade.php`, использует `$model->canonical_url ?:
+url()->current()`.
+
+### 3.2. `noindex` flag работает per-row
+
+`Article.noindex` и `BlogCategory.noindex` — boolean колонки. При true
+вставляется `<meta name="robots" content="noindex, nofollow">` на странице.
+
+Не оверрайдить из partial; honor flag на head.blade.php уровне.
+
+### 3.3. `@id` linkage в schema graph
+
+Каждая Organization ссылка — через `@id`, не embedded:
+```json
+"publisher": { "@id": "https://triad.kz/#organization" }
+```
+Не:
+```json
+"publisher": { "@type": "Organization", "name": "...", "logo": "..." }
+```
+
+`@id` linkage позволяет Google склеить граф сущностей.
+
+### 3.4. Breadcrumb на статье и категории
+
+Visual `<x-breadcrumb>` компонент + `BreadcrumbList` JSON-LD на той же странице.
+
+Реализация breadcrumb partial берёт items array, эмитит JSON-LD —
+переюзаемо для статьи, категории, /blog hub.
+
+### 3.5. IndexNow ping на publish/update/delete
+
+Через Article/BlogCategory observers (Phase 2). НЕ через ручной trigger в
+контроллере — иначе пропустим bulk-операции из tinker / Filament bulk
+actions.
+
+### 3.6. Sitemap включает blog
+
+`SitemapController` (existing) добавляет Article + BlogCategory entries
+(Phase 2 todo).
+
+---
+
+## 4. URL conventions
+
+### 4.1. Slug правила
+
+```
+Article.slug         — globally unique, kebab-case latin
+BlogCategory.slug    — namespace blog_categories, kebab-case latin
+URL: /blog/{slug}    — НЕ /blog/{category}/{slug}
+```
+
+Уникальность Article.slug глобально — статья может перейти в другую
+рубрику без ломки URL.
+
+### 4.2. Slug auto-redirect
+
+`HasSlugRedirect` trait на обоих моделях. При смене slug:
+- Old URL → new URL пишется в `redirects` таблицу как 301
+- Middleware `MissingPageRedirector` ловит 404 и редиректит
+- Уже работает для Product / Category / Page / Article / BlogCategory
+
+### 4.3. Что НЕ должно быть в URL
+
+- ✗ `/blog/{category}/{slug}` — slug привязан к категории, ломается при move
+- ✗ `/blog/tag/{tag}` — тегов нет, заменено M2M-связями
+- ✗ `/blog/author/{slug}` — авторов нет (publisher-only)
+- ✗ `/blog/{year}/{month}/{slug}` — wordpress-стиль, ломается при backdating
+
+---
+
+## 5. Media conventions
+
+### 5.1. Article cover collection
+
+| Conversion | Размер | Назначение |
+|---|---|---|
+| `thumb` | 300×300 | Listing thumb |
+| `card` | 600×400 | Card grid |
+| `og` | 1200×630 | Open Graph + Twitter |
+| `hero` | 1600 wide | Hero на article page |
+| `schema_1_1` | 1200×1200 | schema.org image[] (1:1) |
+| `schema_4_3` | 1200×900 | schema.org image[] (4:3) |
+| `schema_16_9` | 1200×675 | schema.org image[] (16:9) |
+
+Все конверсии `nonOptimized()` — Plesk shared блокирует `proc_open`,
+Spatie optimizer'ы (jpegoptim, pngquant) не работают.
+
+### 5.2. Form validation
+
+```php
+SpatieMediaLibraryFileUpload::make('cover')
+    ->collection('cover')
+    ->image()
+    ->rules(['dimensions:min_width=1200'])
+```
+
+Без `min_width=1200` schema_*-конверсии upscale до 1200 → blurry в SERP.
+
+### 5.3. `imageAlt()` описывает картинку, не страницу
+
+```php
+// Article
+return $this->title;   // illustrative, no city/brand tail
+
+// BlogCategory  
+return 'Иллюстрация рубрики «'.$this->name.'» — блог ТРИ АД';
+// НЕ: $this->name.' — каталог статей в Алматы' (это про страницу)
+```
+
+WCAG: alt описывает image content, не page metadata.
+
+---
+
+## 6. Filament conventions
+
+### 6.1. ArticleResource form sections
+
+| Section | Поля | State |
+|---|---|---|
+| Статья | blog_category_id (Select, required), title, subtitle, slug, published_at, excerpt, cover, content | Editable |
+| Авто-статистика и обновления | word_count, reading_minutes, updated_content_at | `disabled + dehydrated(false)` |
+| SEO и социальные сети | meta_title, meta_description, og_image_override, canonical_url, noindex | `collapsed` |
+
+### 6.2. EditArticle header actions
+
+Порядок:
+1. `markContentUpdated` — главный action для freshness signal
+2. `InternalLinkPickerAction` — встроенная перелинковка
+3. `DeleteAction` / `ForceDeleteAction` / `RestoreAction`
+
+### 6.3. BlogCategoryResource form
+
+Section «Рубрика» содержит: name, slug, description (RichEditor),
+order, published, listed, cover.
+
+SeoSection collapsed внизу — meta_title/desc/canonical/noindex для рубрики.
+
+### 6.4. Reorderable table
+
+BlogCategoriesTable использует `->reorderable('order')` — drag-handle в
+UI меняет `order` колонку напрямую.
+
+### 6.5. Article inline-create через ArticleForm
+
+BlogCategory inline-create **запрещён**. Эта рубрика требует description,
+cover, SEO. Inline-форма из 3 полей создала бы огрызок.
+
+---
+
+## 7. Schema.org graph — file map
+
+| Partial | What | Когда подключать |
+|---|---|---|
+| `partials/schema/organization.blade.php` | Organization singleton (`@id` graph root) | На каждой странице (через head) |
+| `partials/schema/website.blade.php` | WebSite + SearchAction | На главной + `/blog` |
+| `partials/schema/article.blade.php` | BlogPosting (per article) | `blog/article.blade.php` only |
+| `partials/schema/blog-category.blade.php` | CollectionPage (per category) | `blog/category.blade.php` only |
+| `partials/schema/breadcrumb.blade.php` | BreadcrumbList | Везде кроме home (передаётся items array) |
+| `partials/schema/product.blade.php` | Product (existing, для каталога) | `catalog/product.blade.php` |
+
+Каждый partial — отдельный `<script type="application/ld+json">` блок.
+Google склеивает graph через `@id` references.
+
+---
+
+## 8. Reading stats и `updated_content_at` — runtime semantics
+
+### 8.1. `Article::recomputeReadingStats()` — single source of truth
+
+Триггер: `static::saving()` в `Article::booted()` при
+`isDirty('content') || word_count === null`.
+
+Запускается:
+- При admin save в Filament (любое изменение)
+- При seed
+- При первом импорте контента (миграции, скрипты)
+
+**НЕ запускается** при `saveQuietly()` — поэтому `markUpdatedAction()`
+использует `forceFill + saveQuietly` чтобы не пересчитывать stats
+повторно (когда меняется только `updated_content_at`).
+
+### 8.2. `Article::effectiveModifiedAt()` — fallback на published
+
+```php
+return $this->updated_content_at ?? $this->published_at;
+// (с инлайн @var аннотацией из-за larastan stub limitation)
+```
+
+Используется в:
+- `partials/schema/article.blade.php::dateModified`
+- Sitemap entry `lastmod`
+- Open Graph `article:modified_time`
+
+### 8.3. `Article::relatedInBlogCategory($limit, $exclude)` — Related block
+
+Возвращает Eloquent Collection статей той же `blog_category_id`,
+исключая self и `$exclude`. Используется:
+- «Также в категории» блок на article page (Phase 1)
+- В Phase 2 `$exclude` будет содержать id'шники pillar/cluster блока для
+  deduplication
+
+---
+
+## 9. Что добавлять в Phase 2 P1 (cheatsheet)
+
+См. полный roadmap в [PLAN.md §20](./PLAN.md#20-phase-plan).
+
+### Если попросят добавить «теги»
+**НЕТ.** Используем M2M-связи (article_product, article_gost,
+article_category). См. [PLAN.md §3.4](./PLAN.md#34-теги--не-нужны).
+
+### Если попросят FAQ-блок
+Проверь: есть ли **реальные 4-8 вопросов** из Wordstat/GSC? Если нет —
+**не добавляем** schema-разметку. Добавляем только FAQ render-блок без
+JSON-LD. См. [PLAN.md §7.5](./PLAN.md#75-faqpage-phase-2-опционально).
+
+### Если попросят HowTo
+Только для AI extraction (Phase 2). НЕ ожидать SERP-эффекта.
+
+### Если попросят Author entity
+Перечитать [PLAN.md §3.1](./PLAN.md#31-author-attribution--publisher-only). Если у заказчика появился
+реальный инженер с био — добавлять с условиями (no fake bios, no
+stock photos, real LinkedIn). Иначе — НЕТ.
+
+### Если попросят «search через MySQL FULLTEXT»
+НЕТ. Сразу Meilisearch.
+
+---
+
+## 10. Debug / smoke / lint
+
+### 10.1. Миграции
+
+```
+migrate
+migrate:status
+migrate:rollback --step=2
+```
+
+### 10.2. Lint
+
+```bash
+vendor/bin/pint app/Models/Article.php app/Models/BlogCategory.php
+vendor/bin/pint app/Filament/Resources/Articles app/Filament/Resources/BlogCategories
+vendor/bin/phpstan analyse
+```
+
+### 10.3. Schema validation
+
+- Открыть https://search.google.com/test/rich-results
+- Paste article URL → проверить:
+  - Article / BlogPosting detected
+  - Breadcrumb detected
+  - Organization detected
+  - 3 image ratios все loadable
+  - `@id` references resolve
+
+### 10.4. Yandex Webmaster
+
+- https://webmaster.yandex.ru/site/<domain>/
+  - Регион → Алматы, KZ
+  - IndexNow status (после Phase 2)
+  - Sitemap registered
+
+### 10.5. Smoke browser
+
+После rendering правок:
+- Breadcrumb visible + clickable
+- Reading time shown
+- TOC рендерится (после Phase 1 todo)
+- Y.Metрика fires `article_view` (после Phase 3 events)
+- Cover 1200+ load, responsive
+
+### 10.6. Tests (когда добавим)
+
+```bash
+vendor/bin/pest --filter=BlogTest
+vendor/bin/pest --filter=ArticleObserverTest
+```
+
+---
+
+## 11. Связанные документы
+
+- [PLAN.md](./PLAN.md) — стратегия + SEO калибровка + sources
+- [/CLAUDE.md](../../CLAUDE.md) — project-wide
+- [/database/migrations/CLAUDE.md](../../database/migrations/CLAUDE.md) — migration conventions
+- [/app/Filament/CLAUDE.md](../../app/Filament/CLAUDE.md) — Filament conventions *(если существует)*
+- [/resources/views/CLAUDE.md](../../resources/views/CLAUDE.md) — Blade conventions *(если существует)*
+
+---
+
+## 12. Change log
+
+| Date | Change |
+|---|---|
+| 2026-05-30 | Initial. Created post-critique, после Phase 1 P0 backend landing. |
