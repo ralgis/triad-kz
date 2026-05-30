@@ -106,13 +106,6 @@
                     </p>
                 </a>
 
-                {{-- Manager byline — adds human face to a B2B contact --}}
-                <div class="px-5 sm:px-6 py-4 border-b-2 border-concrete-dark">
-                    <p class="font-mono text-[10px] text-haze uppercase tracking-wider mb-2">Менеджер</p>
-                    <p class="font-display uppercase text-sm">Алексей Алексеев</p>
-                    <p class="text-xs text-steel-soft mt-0.5">начальник отдела продаж</p>
-                </div>
-
                 {{-- Hours --}}
                 <div class="px-5 sm:px-6 py-4 border-b-2 border-concrete-dark">
                     <p class="font-mono text-[10px] text-haze uppercase tracking-wider mb-2">Часы работы</p>
