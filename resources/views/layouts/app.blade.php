@@ -21,11 +21,13 @@
     @include('partials.schema.organization')
     @include('partials.schema.local-business')
 </head>
-<body class="min-h-full flex flex-col bg-white text-slate-800 antialiased {{ $body_class ?? '' }}">
-    {{-- Skip-link for keyboard / screen-reader users. --}}
+<body class="min-h-full flex flex-col bg-concrete text-steel antialiased {{ $body_class ?? '' }}">
+    {{-- Skip-link for keyboard / screen-reader users. Drafting Floor:
+         square edges, blueprint accent, no rounded corners. --}}
     <a href="#main"
        class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50
-              focus:bg-brand-600 focus:text-white focus:px-4 focus:py-2 focus:rounded">
+              focus:bg-blueprint-600 focus:text-document focus:px-4 focus:py-2
+              focus:font-display focus:uppercase focus:tracking-wider focus:text-xs">
         Перейти к контенту
     </a>
 

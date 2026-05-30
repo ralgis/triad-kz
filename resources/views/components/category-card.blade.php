@@ -6,8 +6,8 @@
 @endphp
 
 <a href="{{ $category->url() }}"
-   class="group block bg-white border border-slate-200 rounded-lg overflow-hidden hover:border-brand-400 hover:shadow-md transition">
-    <div class="aspect-[4/3] bg-slate-50">
+   class="group block bg-document border-2 border-edge hover:translate-y-[-2px] transition">
+    <div class="aspect-[4/3] bg-concrete-dark border-b-2 border-edge overflow-hidden">
         @if($image)
             <img src="{{ $image }}"
                  alt="{{ $category->imageAlt() }}"
@@ -15,15 +15,19 @@
                  loading="lazy"
                  class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
         @else
-            <div class="w-full h-full flex items-center justify-center text-slate-300 text-3xl font-semibold">
+            <div class="w-full h-full flex items-center justify-center font-display uppercase tracking-wider text-haze text-4xl">
                 {{ mb_substr($category->name, 0, 1) }}
             </div>
         @endif
     </div>
-    <div class="p-4">
-        <h3 class="font-medium text-slate-900 group-hover:text-brand-600">{{ $category->name }}</h3>
+    <div class="p-4 flex items-center justify-between gap-3">
+        <h3 class="font-display uppercase tracking-tight text-base lg:text-lg text-steel group-hover:text-blueprint-600 transition leading-tight">
+            {{ $category->name }}
+        </h3>
         @if($count !== null)
-            <p class="mt-1 text-sm text-slate-500">{{ $count }} {{ trans_choice('товар|товара|товаров', $count) }}</p>
+            <span class="font-mono text-xs text-haze spec-value shrink-0">
+                {{ $count }}<span class="text-haze/60"> SKU</span>
+            </span>
         @endif
     </div>
 </a>
