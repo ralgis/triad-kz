@@ -4,64 +4,70 @@
 ])
 
 @section('content')
-    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
         <x-breadcrumb :items="[['label' => 'ГОСТы и Серии', 'url' => url('/gosts')]]" />
 
-        <h1 class="mt-4 text-3xl sm:text-4xl font-semibold text-slate-900">
-            ГОСТы и Серии
-        </h1>
-
-        <p class="mt-3 text-slate-600">
-            Технические стандарты, по которым изготавливаются наши изделия. Действующие редакции в Казахстане + исторические редакции, по которым сохраняется маркировка.
-        </p>
+        <header class="mt-6 sm:mt-8 pb-6 border-b-2 border-edge">
+            <p class="font-mono text-[10px] sm:text-xs text-haze uppercase tracking-wider mb-3">
+                ━━━━━━━ ТЕХНИЧЕСКИЕ СТАНДАРТЫ
+            </p>
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl uppercase">ГОСТы и серии</h1>
+            <p class="mt-4 text-base text-steel-soft leading-relaxed max-w-2xl">
+                Технические стандарты, по которым изготавливаются наши изделия. Действующие
+                редакции в Казахстане + исторические редакции, по которым сохраняется маркировка.
+            </p>
+        </header>
 
         @if($gosts->isEmpty())
-            <div class="mt-8 p-6 rounded-lg border border-slate-200 bg-slate-50 text-slate-600">
-                Справочник пока пустой. Записи добавляются через админ-панель.
+            <div class="mt-8 p-6 border-2 border-edge bg-document">
+                <p class="font-mono text-sm text-haze uppercase tracking-wider">
+                    Справочник пока пустой. Записи добавляются через админ-панель.
+                </p>
             </div>
         @else
-            {{--
-                Pure Alpine accordion — one root x-data tracks which item is open;
-                click on a header toggles it and closes the others. URL hash
-                (#slug) auto-opens on page load so links from product cards
-                jump straight to the relevant entry.
-            --}}
             <ul x-data="{
                     open: window.location.hash ? window.location.hash.slice(1) : null,
                     toggle(slug) { this.open = this.open === slug ? null : slug; window.location.hash = this.open ?? ''; }
                 }"
-                class="mt-6 space-y-2">
+                class="mt-8 space-y-2">
                 @foreach($gosts as $gost)
-                    <li id="{{ $gost->slug }}"
-                        class="border border-slate-200 rounded-lg bg-white overflow-hidden">
+                    @php
+                        $kindColor = match ($gost->kind) {
+                            \App\Models\Gost::KIND_GOST => 'blueprint',
+                            \App\Models\Gost::KIND_SERIYA => 'steel',
+                            \App\Models\Gost::KIND_TOO => 'stamp',
+                            default => 'haze',
+                        };
+                    @endphp
+                    <li id="{{ $gost->slug }}" class="border-2 border-edge bg-document">
                         <button type="button"
                                 @click="toggle('{{ $gost->slug }}')"
                                 :aria-expanded="open === '{{ $gost->slug }}'"
                                 aria-controls="{{ $gost->slug }}-body"
-                                class="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-600 text-white text-sm font-semibold transition-transform shrink-0"
+                                class="w-full flex items-stretch gap-3 px-4 py-3 text-left hover:bg-concrete transition focus:outline-none focus:bg-concrete">
+                            <span class="inline-flex items-center justify-center w-7 h-7 bg-steel text-document font-mono text-sm shrink-0 self-center transition-transform"
                                   :class="open === '{{ $gost->slug }}' ? 'rotate-45' : ''"
                                   aria-hidden="true">+</span>
 
-                            <span class="flex-1 min-w-0">
-                                <span class="font-medium text-slate-900">{{ $gost->fullLabel() }}</span>
+                            <span class="flex-1 min-w-0 self-center">
+                                <span class="font-display uppercase tracking-tight text-steel">{{ $gost->fullLabel() }}</span>
                                 @if($gost->title)
-                                    <span class="block text-sm text-slate-500 truncate">{{ $gost->title }}</span>
+                                    <span class="block font-mono text-xs text-haze truncate mt-0.5">{{ $gost->title }}</span>
                                 @endif
                             </span>
 
-                            <div class="flex items-center gap-2 shrink-0">
+                            <div class="flex items-center gap-2 shrink-0 self-center">
                                 @if(! $gost->is_current)
-                                    <span class="hidden sm:inline-block text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
+                                    <span class="hidden sm:inline-block font-mono text-[10px] uppercase tracking-wider text-stamp-700 bg-stamp-50 border-2 border-stamp-600 px-2 py-1">
                                         Устарел
                                     </span>
                                 @endif
 
                                 <span @class([
-                                    'text-xs uppercase tracking-wide font-semibold',
-                                    'text-brand-600' => $gost->kind === \App\Models\Gost::KIND_GOST,
-                                    'text-emerald-600' => $gost->kind === \App\Models\Gost::KIND_SERIYA,
-                                    'text-amber-600' => $gost->kind === \App\Models\Gost::KIND_TOO,
+                                    'font-mono text-[10px] uppercase tracking-wider px-2 py-1 border-2',
+                                    'text-blueprint-700 border-blueprint-600 bg-blueprint-50' => $gost->kind === \App\Models\Gost::KIND_GOST,
+                                    'text-steel border-edge bg-document' => $gost->kind === \App\Models\Gost::KIND_SERIYA,
+                                    'text-stamp-700 border-stamp-600 bg-stamp-50' => $gost->kind === \App\Models\Gost::KIND_TOO,
                                 ])>
                                     {{ $gost->kindLabel() }}
                                 </span>
@@ -72,59 +78,59 @@
                              x-show="open === '{{ $gost->slug }}'"
                              x-cloak
                              x-collapse
-                             class="px-4 pb-4 pt-1 text-slate-700">
+                             class="px-4 pb-4 pt-1 border-t-2 border-concrete-dark">
 
-                            {{-- Status / supersession banner --}}
                             @if(! $gost->is_current)
-                                <div class="mb-4 p-3 rounded border border-amber-200 bg-amber-50 text-sm">
-                                    <p class="font-medium text-amber-900">
-                                        ⚠️ Не является действующей редакцией в Казахстане
+                                <div class="mb-4 p-3 border-2 border-stamp-600 bg-stamp-50">
+                                    <p class="font-mono text-xs uppercase tracking-wider text-stamp-700">
+                                        ⊘ Не является действующей редакцией в Казахстане
                                         @if($gost->effective_in_kz_until)
                                             (действовал до {{ $gost->effective_in_kz_until->format('d.m.Y') }})
                                         @endif
                                     </p>
                                     @if($gost->supersededBy)
-                                        <p class="mt-1 text-amber-900">
-                                            Заменён: <a href="{{ $gost->supersededBy->url() }}"
-                                                        class="font-semibold underline hover:no-underline">{{ $gost->supersededBy->fullLabel() }}</a>
+                                        <p class="mt-2 text-sm text-stamp-700">
+                                            Заменён:
+                                            <a href="{{ $gost->supersededBy->url() }}"
+                                               class="font-mono font-bold underline hover:no-underline">{{ $gost->supersededBy->fullLabel() }}</a>
                                         </p>
                                     @elseif($gost->superseded_note)
-                                        <p class="mt-1 text-amber-900">{{ $gost->superseded_note }}</p>
+                                        <p class="mt-2 text-sm text-stamp-700">{{ $gost->superseded_note }}</p>
                                     @endif
                                 </div>
                             @endif
 
-                            {{-- Description body --}}
                             @if($gost->description)
-                                <div class="prose prose-slate prose-sm max-w-none">
+                                <div class="prose prose-slate prose-sm max-w-none mt-4
+                                            prose-headings:font-display prose-headings:uppercase prose-headings:text-steel
+                                            prose-p:text-steel prose-strong:text-steel
+                                            prose-a:text-blueprint-600 hover:prose-a:underline
+                                            prose-code:font-mono">
                                     {!! $gost->description !!}
                                 </div>
                             @else
-                                <p class="text-slate-500 italic">Описание не заполнено.</p>
+                                <p class="mt-4 font-mono text-xs text-haze uppercase tracking-wider italic">Описание не заполнено</p>
                             @endif
 
-                            {{-- Related references: parent ГОСТ for a Серия --}}
                             @if($gost->relatesToGost)
-                                <div class="mt-4 p-3 rounded border border-brand-200 bg-brand-50 text-sm">
-                                    <p class="text-brand-900">
-                                        📋 Разработана в рамках:
-                                        <a href="{{ $gost->relatesToGost->url() }}"
-                                           class="font-semibold underline hover:no-underline">{{ $gost->relatesToGost->fullLabel() }}</a>
-                                    </p>
+                                <div class="mt-4 p-3 border-l-4 border-blueprint-600 bg-blueprint-50">
+                                    <p class="font-mono text-[10px] text-blueprint-700 uppercase tracking-wider mb-1">━━━ Разработана в рамках</p>
+                                    <a href="{{ $gost->relatesToGost->url() }}"
+                                       class="font-display uppercase tracking-tight text-blueprint-900 underline hover:no-underline">
+                                        {{ $gost->relatesToGost->fullLabel() }}
+                                    </a>
                                 </div>
                             @endif
 
-                            {{-- Reverse — series derived from this ГОСТ --}}
                             @if($gost->series->isNotEmpty())
-                                <div class="mt-4 p-3 rounded border border-emerald-200 bg-emerald-50 text-sm">
-                                    <p class="font-medium text-emerald-900 mb-1">Связанные серии рабочих чертежей:</p>
-                                    <ul class="space-y-0.5">
+                                <div class="mt-4 p-3 border-l-4 border-steel bg-document">
+                                    <p class="font-mono text-[10px] text-haze uppercase tracking-wider mb-2">━━━ Связанные серии рабочих чертежей</p>
+                                    <ul class="space-y-1">
                                         @foreach($gost->series as $s)
-                                            <li>
-                                                <a href="{{ $s->url() }}"
-                                                   class="text-emerald-800 underline hover:no-underline">{{ $s->fullLabel() }}</a>
+                                            <li class="text-sm">
+                                                <a href="{{ $s->url() }}" class="font-display uppercase tracking-tight text-steel underline hover:no-underline">{{ $s->fullLabel() }}</a>
                                                 @if(! $s->is_current)
-                                                    <span class="text-xs text-amber-700">(устарела)</span>
+                                                    <span class="font-mono text-[10px] text-stamp-700 uppercase tracking-wider ml-1">(устарела)</span>
                                                 @endif
                                             </li>
                                         @endforeach
@@ -132,10 +138,9 @@
                                 </div>
                             @endif
 
-                            {{-- Footer metadata --}}
                             @if($gost->introduced_at)
-                                <p class="mt-4 text-xs text-slate-500">
-                                    Введён в действие: {{ $gost->introduced_at->format('d.m.Y') }}
+                                <p class="mt-4 font-mono text-[10px] text-haze uppercase tracking-wider">
+                                    Введён в действие: <span class="spec-value">{{ $gost->introduced_at->format('d.m.Y') }}</span>
                                 </p>
                             @endif
                         </div>

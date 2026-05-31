@@ -1,27 +1,26 @@
 @props(['items' => []])
 
 {{--
-    Semantic breadcrumb. $items is an ordered list of [['label' => ..., 'url' => ...], ...]
-    where the LAST item is the current page (rendered as plain text, no link).
+    Drafting Floor breadcrumb. Mono uppercase, haze color, hard «·»
+    separator. Reads like a draft-sheet location strip.
 
-    Emits both the visual <nav> AND the BreadcrumbList JSON-LD so search
-    engines render rich breadcrumbs without us hand-wiring the schema
-    partial on every page.
+    $items is an ordered list of [['label' => ..., 'url' => ...], ...]
+    where the LAST item is the current page (rendered as plain text).
 --}}
 @if(count($items) > 0)
     @include('partials.schema.breadcrumb', ['items' => $items])
-    <nav aria-label="Хлебные крошки" class="text-sm">
-        <ol class="flex flex-wrap items-center gap-1 text-slate-500">
-            <li class="flex items-center gap-1">
-                <a href="{{ url('/') }}" class="hover:text-brand-600">Главная</a>
+    <nav aria-label="Хлебные крошки" class="font-mono text-[10px] sm:text-xs text-haze uppercase tracking-wider">
+        <ol class="flex flex-wrap items-center gap-1.5">
+            <li>
+                <a href="{{ url('/') }}" class="hover:text-blueprint-600 transition">Главная</a>
             </li>
             @foreach($items as $i => $item)
-                <li class="flex items-center gap-1">
-                    <span aria-hidden="true" class="text-slate-300">/</span>
+                <li class="flex items-center gap-1.5">
+                    <span aria-hidden="true" class="text-haze/60">·</span>
                     @if($i === count($items) - 1)
-                        <span aria-current="page" class="text-slate-700">{{ $item['label'] }}</span>
+                        <span aria-current="page" class="text-steel">{{ $item['label'] }}</span>
                     @else
-                        <a href="{{ $item['url'] }}" class="hover:text-brand-600">{{ $item['label'] }}</a>
+                        <a href="{{ $item['url'] }}" class="hover:text-blueprint-600 transition">{{ $item['label'] }}</a>
                     @endif
                 </li>
             @endforeach

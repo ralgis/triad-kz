@@ -10,10 +10,10 @@
 
 <div>
     @if($label)
-        <label for="{{ $id }}" class="block text-sm font-medium text-slate-700 mb-1">
+        <label for="{{ $id }}" class="block font-mono text-[10px] text-haze uppercase tracking-wider mb-1.5">
             {{ $label }}
             @if($required)
-                <span class="text-red-600" aria-label="обязательное поле">*</span>
+                <span class="text-stamp-600" aria-label="обязательное поле">*</span>
             @endif
         </label>
     @endif
@@ -27,18 +27,17 @@
         @error($errorKey) aria-invalid="true" aria-describedby="{{ $id }}-error" @enderror
         @if($help && ! $errors->has($errorKey)) aria-describedby="{{ $id }}-help" @endif
         {{ $attributes->except(['id', 'value'])->merge([
-            'class' => 'block w-full rounded border-slate-300 px-3 py-2 text-slate-900
-                        placeholder:text-slate-400 focus:border-brand-500 focus:ring-2
-                        focus:ring-brand-500/30 focus:outline-none'
-                        . ($errors->has($errorKey) ? ' border-red-500' : ''),
+            'class' => 'block w-full bg-document border-2 border-edge px-3 py-2.5 text-steel
+                        placeholder:text-haze focus:border-blueprint-600 focus:outline-none transition'
+                        . ($errors->has($errorKey) ? ' border-stamp-600' : ''),
         ]) }}
     >
 
     @error($errorKey)
-        <p id="{{ $id }}-error" class="mt-1 text-sm text-red-600">{{ $message }}</p>
+        <p id="{{ $id }}-error" class="mt-1.5 font-mono text-[10px] uppercase tracking-wider text-stamp-700">⊘ {{ $message }}</p>
     @else
         @if($help)
-            <p id="{{ $id }}-help" class="mt-1 text-sm text-slate-500">{{ $help }}</p>
+            <p id="{{ $id }}-help" class="mt-1.5 font-mono text-[10px] text-haze uppercase tracking-wider">{{ $help }}</p>
         @endif
     @enderror
 </div>
