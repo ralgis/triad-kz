@@ -181,3 +181,19 @@ h4, h5, h6 {
     outline-offset: 2px;
     border-radius: 0;
 }
+
+/*
+ * Swiper integration — the library draws nav arrows through ::after
+ * pseudoelements and uses its own CSS variables for color, so Tailwind
+ * `!text-steel` on the parent only covers half the styling. Pin the
+ * arrows + active thumbnail border into the Drafting Floor palette.
+ */
+.swiper {
+    --swiper-navigation-color: var(--color-steel);
+    --swiper-navigation-size: 28px;
+}
+.product-thumbs-swiper .swiper-slide-thumb-active {
+    border-color: var(--color-blueprint-600);
+    outline: 2px solid var(--color-blueprint-600);
+    outline-offset: -2px;
+}
