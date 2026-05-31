@@ -76,7 +76,7 @@
                                                      alt="{{ $img['alt'] }}"
                                                      title="{{ $img['title'] }}"
                                                      class="w-full h-full object-contain"
-                                                     loading="lazy">
+                                                     @if($i === 0) loading="eager" fetchpriority="high" @else loading="lazy" @endif>
                                             </button>
                                         </div>
                                     @endforeach

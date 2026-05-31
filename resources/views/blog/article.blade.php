@@ -138,7 +138,9 @@
                         <img src="{{ $cover }}"
                              alt="{{ $article->imageAlt() }}"
                              title="{{ $article->imageTitle() }}"
-                             class="w-full h-auto">
+                             class="w-full h-auto"
+                             loading="eager"
+                             fetchpriority="high">
                     </figure>
                 @endif
 
@@ -218,6 +220,7 @@
                                         @if(! empty($step['image']))
                                             <img src="{{ $step['image'] }}"
                                                  alt="Шаг {{ $i + 1 }}: {{ $step['name'] ?? '' }}"
+                                                 loading="lazy"
                                                  class="mt-3 border-2 border-edge bg-concrete-dark max-w-md">
                                         @endif
                                     </div>
